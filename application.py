@@ -38,7 +38,7 @@ def load_configuration():
             "host": "",
             "user": "",
             "password": "",
-            "limit": "40",
+            "limit": "35",
         },
         "slack": {
             "token": "",
@@ -160,9 +160,9 @@ class QueryTrac(flask.views.MethodView):
             result.append(QUERY_TEMPLATE % attr)
         if total_tickets > limit:
             result.append("")
-            result.append("%s tickets not shown!" % (total_tickets - limit))
-            result.append("The rest of the results available "
-                          "<https://%s/query?%s|here>" %
+            result.append("_%s tickets not shown!_" % (total_tickets - limit))
+            result.append("_The rest of the results available "
+                          "<https://%s/query?%s|here>_" %
                           (CONF.get("trac", "host"), query))
         if not result:
             return {"text": "No tickets found", "response_type": "in_channel"}
