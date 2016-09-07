@@ -36,6 +36,7 @@ def load_configuration():
             "host": "",
             "user": "",
             "password": "",
+            "limit": "40",
         },
         "slack": {
             "token": "",
@@ -138,11 +139,23 @@ class QueryTrac(flask.views.MethodView):
         return attributes
 
     def _handle_query(self, query):
+        limit = int(conf.get("trac", "limit"))
         result = []
-        tickets = trac_proxy.ticket.query(query)
-        for ticket in tickets:
+        try:
+            tickets = trac_proxy.ticket.query(query)
+        except Exception:
+            return {"text": ("Oops, something went wrong!\n"
+                             "The query might not be valid?")}
+        total_tickets = len(tickets)
+        for ticket in tickets[:limit]:
             attr = self._get_tick_attributes(ticket)
             result.append(QUERY_TEMPLATE % attr)
+        if total_tickets > limit:
+            result.append("")
+            result.append("%s tickets not shown!" % (total_tickets - limit))
+            result.append("The rest of the results available "
+                          "<https://%s/query?%s|here>" %
+                          (conf.get("trac", "host"), query))
         if not result:
             return {"text": "No tickets found", "response_type": "in_channel"}
         return {"text": "\n".join(result), "response_type": "in_channel"}
@@ -223,7 +236,6 @@ class QueryTrac(flask.views.MethodView):
             return self._handle_query(query)
 
         return {"text": "Invalid command: %s" % command}
-
 
 
 application.add_url_rule(
