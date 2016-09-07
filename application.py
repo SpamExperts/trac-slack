@@ -38,7 +38,8 @@ def load_configuration():
             "password": "",
         },
         "slack": {
-            "token": ""
+            "token": "",
+            "endpoint": "/trac-slack"
         },
         "logging": {
             "file": "/var/log/trac-slack.log",
@@ -229,7 +230,7 @@ class QueryTrac(flask.views.MethodView):
 
 
 application.add_url_rule(
-    '/trac',
+    conf.get("slack", "endpoint"),
     view_func=QueryTrac.as_view('trac_query')
 )
 
