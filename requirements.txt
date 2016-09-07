@@ -1,0 +1,4 @@
+requests==2.8.1
+flask==0.11.1
+raven==5.24.3
+mimerender==0.6.0
