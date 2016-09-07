@@ -214,7 +214,7 @@ class QueryTrac(flask.views.MethodView):
         except ValueError:
             # Try to figure out what the user wants
             try:
-                command, query = "describe", int(text)
+                command, query = "describe", int(text.lstrip('#'))
             except (ValueError, TypeError):
                 command, query = "query", text
         command = command.lower()
