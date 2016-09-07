@@ -55,11 +55,11 @@ def load_configuration():
         for option, value in values.items():
             conf.set(section, option, value)
 
-    user_conf = os.path.expanduser("~/.trac.conf")
+    user_conf = os.path.expanduser("~/.trac-slack.conf")
     if os.path.exists(user_conf):
         conf.read(user_conf)
-    elif os.path.exists("/etc/trac.conf"):
-        conf.read("/etc/trac.conf")
+    elif os.path.exists("/etc/trac-slack.conf"):
+        conf.read("/etc/trac-slack.conf")
     return conf
 
 conf = load_configuration()
