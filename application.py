@@ -63,17 +63,17 @@ def load_configuration():
     return conf
 
 
-conf = load_configuration()
+CONF = load_configuration()
 # This is the WSGI application that we are creating.
 application = flask.Flask(__name__)
 mimerender = FlaskMimeRender()(default='json', json=jsonify)
 
 
 def setup_logging():
-    user = conf.get("logging", "user")
-    filename = conf.get("logging", "file")
-    sentry = conf.get("logging", "sentry")
-    level = getattr(logging, conf.get("logging", "level").upper())
+    user = CONF.get("logging", "user")
+    filename = CONF.get("logging", "file")
+    sentry = CONF.get("logging", "sentry")
+    level = getattr(logging, CONF.get("logging", "level").upper())
     if user and pwd.getpwuid(os.getuid()).pw_name != user:
         return
 
@@ -113,7 +113,7 @@ setup_logging()
 
 def verify_token():
     token = flask.request.form["token"]
-    conf_token = conf.get("slack", "token")
+    conf_token = CONF.get("slack", "token")
     if token != conf_token:
         return "Invalid token"
 
@@ -122,8 +122,8 @@ application.before_request(verify_token)
 
 trac_proxy = client.ServerProxy(
     "https://%s:%s@%s/login/rpc" %
-    (conf.get("trac", "user"), conf.get("trac", "password"),
-     conf.get("trac", "host")), transport=tracxml.SafeRequestsTransport()
+    (CONF.get("trac", "user"), CONF.get("trac", "password"),
+     CONF.get("trac", "host")), transport=tracxml.SafeRequestsTransport()
 )
 
 QUERY_TEMPLATE = (" * <https://%(host)s/ticket/%(number)s|#%(number)s> "
@@ -139,7 +139,7 @@ class QueryTrac(flask.views.MethodView):
         attributes = dict(trac_proxy.ticket.get(ticket)[3])
         stamp = calendar.timegm(attributes['time'].timetuple())
         attributes["stamp"] = stamp
-        attributes["host"] = conf.get("trac", "host")
+        attributes["host"] = CONF.get("trac", "host")
         attributes["number"] = str(ticket)
         attributes["summary"] = self._escape(attributes["summary"])
         attributes["description"] = self._escape(attributes["description"])
@@ -147,7 +147,7 @@ class QueryTrac(flask.views.MethodView):
         return attributes
 
     def _handle_query(self, query):
-        limit = int(conf.get("trac", "limit"))
+        limit = int(CONF.get("trac", "limit"))
         result = []
         try:
             tickets = trac_proxy.ticket.query(query)
@@ -163,7 +163,7 @@ class QueryTrac(flask.views.MethodView):
             result.append("%s tickets not shown!" % (total_tickets - limit))
             result.append("The rest of the results available "
                           "<https://%s/query?%s|here>" %
-                          (conf.get("trac", "host"), query))
+                          (CONF.get("trac", "host"), query))
         if not result:
             return {"text": "No tickets found", "response_type": "in_channel"}
         return {"text": "\n".join(result), "response_type": "in_channel"}
@@ -247,7 +247,7 @@ class QueryTrac(flask.views.MethodView):
 
 
 application.add_url_rule(
-    conf.get("slack", "endpoint"),
+    CONF.get("slack", "endpoint"),
     view_func=QueryTrac.as_view('trac_query')
 )
 
