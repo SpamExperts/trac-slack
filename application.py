@@ -4,6 +4,7 @@ import os
 import pwd
 import logging
 import calendar
+
 try:
     import configparser
 except ImportError:
@@ -18,6 +19,7 @@ try:
     import raven.transport
     from raven.contrib.flask import Sentry
     from raven.handlers.logging import SentryHandler
+
     _has_raven = True
 except ImportError:
     _has_raven = False
@@ -60,10 +62,12 @@ def load_configuration():
         conf.read("/etc/trac-slack.conf")
     return conf
 
+
 conf = load_configuration()
 # This is the WSGI application that we are creating.
 application = flask.Flask(__name__)
 mimerender = FlaskMimeRender()(default='json', json=jsonify)
+
 
 def setup_logging():
     user = conf.get("logging", "user")
@@ -103,13 +107,16 @@ def setup_logging():
         for null_logger in null_loggers:
             null_logger.handlers = [logging.NullHandler()]
 
+
 setup_logging()
+
 
 def verify_token():
     token = flask.request.form["token"]
     conf_token = conf.get("slack", "token")
     if token != conf_token:
         return "Invalid token"
+
 
 application.before_request(verify_token)
 
@@ -119,13 +126,14 @@ trac_proxy = client.ServerProxy(
      conf.get("trac", "host")), transport=tracxml.SafeRequestsTransport()
 )
 
-QUERY_TEMPLATE = " * <https://%(host)s/ticket/%(number)s|#%(number)s> - %(summary)s"
+QUERY_TEMPLATE = (" * <https://%(host)s/ticket/%(number)s|#%(number)s> "
+                  "- %(summary)s")
 
 
 class QueryTrac(flask.views.MethodView):
-
     def _escape(self, value):
-        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        return value.replace("&", "&amp;").replace("<", "&lt;").replace(">",
+                                                                        "&gt;")
 
     def _get_tick_attributes(self, ticket):
         attributes = dict(trac_proxy.ticket.get(ticket)[3])
@@ -245,4 +253,4 @@ application.add_url_rule(
 
 # Testing code.
 if __name__ == "__main__":
-    application.run(debug=True, port=8080, host="0.0.0.0")
+    application.run(debug=True)
