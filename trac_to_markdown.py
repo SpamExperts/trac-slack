@@ -34,7 +34,8 @@ def convert(text, base="", flavour="markdown"):
     # XXX This doesn't handle nested blocks, but those should be
     # XXX uncommon. We would probably need to properly parse the text
     # XXX to handle that.
-    text = re.sub(r"^{{{\s(.*?)\s}}}$", r"```\n\1\n```", text, flags=re.DOTALL)
+    text = re.sub(r"^{{{\s(.*?)\s}}}$", r"```\n\1\n```", text,
+                  flags=re.DOTALL | re.MULTILINE)
     # Also inline code:
     text = re.sub(r"\{\{\{([^\n]+?)\}\}\}", r"`\1`", text)
 
