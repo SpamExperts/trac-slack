@@ -63,9 +63,10 @@ def convert(text, base="", flavour="markdown"):
     text = re.sub(r"=\s+(.+?)\s+=", r"# \1", text)
 
     # Convert lists.
-    text = re.sub(r"(^\s\*)(\s)", transforms["ul"], text)
-    text = re.sub(r"(^\s\-)(\s)", transforms["ul"], text)
-    text = re.sub(r"^\s(\d+)\.(\s)", transforms["ol"], text)
+    text = re.sub(r"(^\s\*)(\s)", transforms["ul"], text, flags=re.MULTILINE)
+    text = re.sub(r"(^\s\-)(\s)", transforms["ul"], text, flags=re.MULTILINE)
+    text = re.sub(r"^\s(\d+)\.(\s)", transforms["ol"], text,
+                  flags=re.MULTILINE)
 
     # Convert links.
     text = re.sub(r"\[(?:wiki:)([^\s]+)\s(.+)\]",
