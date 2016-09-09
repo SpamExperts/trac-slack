@@ -4,6 +4,7 @@ import os
 import pwd
 import logging
 import calendar
+import functools
 
 try:
     import configparser
@@ -30,6 +31,7 @@ from flask import jsonify
 from mimerender import FlaskMimeRender
 
 import tracxml
+import trac_to_markdown
 
 
 def load_configuration():
@@ -131,19 +133,25 @@ QUERY_TEMPLATE = (" * <https://%(host)s/ticket/%(number)s|#%(number)s> "
 
 
 class QueryTrac(flask.views.MethodView):
+    _to_md = functools.partial(trac_to_markdown.convert,
+                               base="https://%s" % CONF.get("trac", "host"),
+                               flavour="mrkdwn")
+
     def _escape(self, value):
         return value.replace("&", "&amp;").replace("<", "&lt;").replace(">",
                                                                         "&gt;")
 
     def _get_tick_attributes(self, ticket):
+        escape = self._escape
+        to_md = self._to_md
         attributes = dict(trac_proxy.ticket.get(ticket)[3])
         stamp = calendar.timegm(attributes['time'].timetuple())
         attributes["stamp"] = stamp
         attributes["host"] = CONF.get("trac", "host")
         attributes["number"] = str(ticket)
-        attributes["summary"] = self._escape(attributes["summary"])
-        attributes["description"] = self._escape(attributes["description"])
-        attributes["keywords"] = self._escape(attributes["keywords"])
+        attributes["summary"] = escape(attributes["summary"])
+        attributes["description"] = escape(to_md(attributes["description"]))
+        attributes["keywords"] = escape(attributes["keywords"])
         return attributes
 
     def _handle_query(self, query):
@@ -191,7 +199,7 @@ class QueryTrac(flask.views.MethodView):
                     "title": attr["summary"],
                     "author_name": attr["owner"],
                     "title_link": "https://%(host)s/ticket/%(number)s" % attr,
-                    "text": attr["description"],
+                    "text": self._to_md(attr["description"]),
                     "fields": [
                         {
                             "title": "Type",
@@ -220,7 +228,8 @@ class QueryTrac(flask.views.MethodView):
                         },
                     ],
                     "footer": "#%(number)s" % attr,
-                    "ts": attr["stamp"]
+                    "ts": attr["stamp"],
+                    "mrkdwn_in": ["text"],
                 }
             ]
         }
