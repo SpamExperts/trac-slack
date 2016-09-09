@@ -85,6 +85,9 @@ try:
 except ImportError:
     pass
 else:
+    import json
+    import datetime
+
     class JSONRequestsTransport(RequestsTransport):
         """Extends the XMLRPC transport where necessary."""
         _connection = (None, None)
@@ -104,3 +107,47 @@ else:
 
     class SafeJSONRequestsTransport(JSONRequestsTransport):
         proto = "https"
+
+
+    def _recursive_to_datetime(data):
+        """Iterate through this object converting datetime objects."""
+        if isinstance(data, basestring):
+            # Strings are iterable, but don't contain other objects
+            # (other than shorter strings).
+            return data
+        try:
+            data_type, data_value = data["__jsonclass__"]
+            assert data_type == "datetime"
+        except (TypeError, IndexError, KeyError):
+            # This is not a dictionary, or not the special one.
+            pass
+        else:
+            return datetime.datetime.strptime(data_value,
+                                              "%Y-%m-%dT%H:%M:%S")
+        if hasattr(data, "items"):
+            new_dict = {}
+            for key, value in data.items():
+                key = _recursive_to_datetime(key)
+                value = _recursive_to_datetime(value)
+                new_dict[key] = value
+            return new_dict
+        try:
+            new_iter = data.__class__()
+            for item in data:
+                new_iter += data.__class__([_recursive_to_datetime(item)])
+            return new_iter
+        except TypeError:
+            return data
+
+
+    def loads(data):
+        """Convert timestamp data to appropriate formats."""
+        # We also skip past the jsonclass and jloads stuff since we are
+        # not using that.
+        if data == "":
+            # Notification.
+            return None
+        result = json.loads(data)
+        return _recursive_to_datetime(result)
+
+    jsonrpclib.jsonrpc.loads = loads
