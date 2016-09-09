@@ -16,6 +16,7 @@ class RequestsTransport(client.Transport):
     proto = "http"
     # This might work, but haven't tested
     accept_gzip_encoding = False
+    _content_type = "text/xml"
 
     def __init__(self, use_datetime=0):
         client.Transport.__init__(self, use_datetime=use_datetime)
@@ -45,7 +46,7 @@ class RequestsTransport(client.Transport):
             self.auth_trac(host, auth_details)
 
         headers = {"User-Agent": self.user_agent,
-                   "Content-Type": "text/xml"}
+                   "Content-Type": self._content_type}
         if self._extra_headers:
             headers.update(dict(self._extra_headers))
 
@@ -59,7 +60,7 @@ class RequestsTransport(client.Transport):
         response.close()
 
         raise client.ProtocolError(host + handler, response.status_codes,
-                                      response.reason, "")
+                                   response.reason, "")
 
     def parse_response(self, response):
         p, u = self.getparser()
@@ -78,3 +79,28 @@ class RequestsTransport(client.Transport):
 class SafeRequestsTransport(RequestsTransport):
     proto = "https"
 
+
+try:
+    import jsonrpclib.jsonrpc
+except ImportError:
+    pass
+else:
+    class JSONRequestsTransport(RequestsTransport):
+        """Extends the XMLRPC transport where necessary."""
+        _connection = (None, None)
+        _extra_headers = []
+        _content_type = "application/json"
+
+        def send_content(self, connection, request_body):
+            connection.putheader("Content-Type", "application/json")
+            connection.putheader("Content-Length", str(len(request_body)))
+            connection.endheaders()
+            if request_body:
+                connection.send(request_body)
+
+        def getparser(self):
+            target = jsonrpclib.jsonrpc.JSONTarget()
+            return jsonrpclib.jsonrpc.JSONParser(target), target
+
+    class SafeJSONRequestsTransport(JSONRequestsTransport):
+        proto = "https"
