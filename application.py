@@ -122,11 +122,24 @@ def verify_token():
 
 application.before_request(verify_token)
 
-trac_proxy = client.ServerProxy(
-    "https://%s:%s@%s/login/rpc" %
-    (CONF.get("trac", "user"), CONF.get("trac", "password"),
-     CONF.get("trac", "host")), transport=tracxml.SafeRequestsTransport()
-)
+try:
+    import jsonrpclib.config
+    import jsonrpclib.jsonrpc
+except ImportError:
+    trac_proxy = client.ServerProxy(
+        "https://%s:%s@%s/login/rpc" %
+        (CONF.get("trac", "user"), CONF.get("trac", "password"),
+         CONF.get("trac", "host")), transport=tracxml.SafeRequestsTransport()
+    )
+else:
+    jsonrpclib.config.use_jsonclass = False
+    trac_proxy = jsonrpclib.jsonrpc.ServerProxy(
+        "https://%s:%s@%s/login/rpc" %
+        (CONF.get("trac", "user"), CONF.get("trac", "password"),
+         CONF.get("trac", "host")),
+        transport=tracxml.SafeJSONRequestsTransport()
+    )
+
 
 QUERY_TEMPLATE = (" * <https://%(host)s/ticket/%(number)s|#%(number)s> "
                   "- %(summary)s")
