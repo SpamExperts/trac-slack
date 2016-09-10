@@ -11,7 +11,7 @@ random_sel = string.ascii_letters
 
 TEST_CONFIG = """
 [trac]
-components = API,Internal Systems,Trac,Pyzor,Logging and Statistics
+components = API,Internal Systems,Trac,Pyzor,Logging and Statistics,Update
 priorities = lowest,low,normal,high,highest
 types = bug,feature,task
 extra_fields = points,requests
@@ -86,6 +86,9 @@ CASES = {
         u"keywords=moshpit&status=!closed&summary=~metal&owner=alex",
     "not my moshpit":
         u"keywords=!moshpit&status=closed&summary=!~metal&owner=alex",
+    # Failing:
+    u"not update_documentation":
+        u"status=!update_documentation",
 }
 
 for l, e in CASES.items():
