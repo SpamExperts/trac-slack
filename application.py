@@ -234,6 +234,7 @@ class QueryTrac(flask.views.MethodView):
     @mimerender
     def post(self):
         text = flask.request.form["text"]
+        user = flask.request.form["user"]
         try:
             command, query = text.split(None, 1)
             assert command.lower() in ("describe", "show", "query")
@@ -253,7 +254,7 @@ class QueryTrac(flask.views.MethodView):
             return self._handle_describe("id=%s" % query)
 
         if command == "show":
-            query = natural.natural_to_query(query, "test")
+            query = natural.natural_to_query(query, user)
             if not query:
                 # Might be nice to have random responses.
                 return {
