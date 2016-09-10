@@ -160,6 +160,7 @@ KNOWN = {
     "severity": "priority",
     "priority": "priority",
     "milestone": "milestone",
+    "resolution": "resolution",
 }
 # Add any custom trac fields to the known list.
 KNOWN.update({field.lower(): field
