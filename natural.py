@@ -303,16 +303,16 @@ def natural_to_query(query, user):
     logger.debug("Found text search: %s", texts)
     logger.debug("Query: %s", query)
     query = query.lower()
-    # Replace component names with unique ids
-    # as those are known to us already
-    for i, j in COMPONENTS.items():
-        query = query.replace(i, j)
-    logger.debug("Replaced components %r", query)
     # Replace any fixed keywords provided in the
     # config file.
     for i, j in FIXED_QUERIES.items():
         query = query.replace(i, j)
     logger.debug("Replaced fixed queries %r", query)
+    # Replace component names with unique ids
+    # as those are known to us already
+    for i, j in COMPONENTS.items():
+        query = query.replace(i, j)
+    logger.debug("Replaced components %r", query)
 
     # If we process and accept a token as part
     # of a filter while going through the
