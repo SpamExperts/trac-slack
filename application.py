@@ -164,8 +164,13 @@ class QueryTrac(flask.views.MethodView):
             result.append("_The rest of the results available "
                           "<https://%s/query?%s|here>_" %
                           (CONF.get("trac", "host"), query))
-        if not result:
-            return {"text": "No tickets found", "response_type": "in_channel"}
+        elif not total_tickets:
+            result.append("No tickets found")
+            result.append("_See in <https://%s/query?%s|trac>_" %
+                          (CONF.get("trac", "host"), query))
+        else:
+            result.append("_See in <https://%s/query?%s|trac>_" %
+                          (CONF.get("trac", "host"), query))
         return {"text": "\n".join(result), "response_type": "in_channel"}
 
     def _handle_describe(self, query):
