@@ -64,6 +64,7 @@ negations = {
 partials = {
     "has", "like", "contains", "alike", "related", "close", "matching",
     "near", "matching", "akin", "relating", "resembling", "fuzzy",
+    "contain",
 }
 exacts = {
     "is", "exactly", "exact", "equals", "same", "identical", "specific", "'m",
@@ -79,7 +80,7 @@ mes = {
     "me", "my", "i",
 }
 
-match_re = re.compile(r'(\'.*?\')|(".*?")')
+match_re = re.compile(r'(?<=\s)(\'.*?\')|(?<=\s)(".*?")')
 
 
 def _is_something(tok, checks=None):
@@ -178,7 +179,6 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         curr_filter = {"not": False, "list": False, "status_tokens": set()}
 
     full = "name" in curr_filter and "op" in curr_filter and "val" in curr_filter
-
     processed = True
     if token.orth_ in KNOWN and "name" not in curr_filter:
         # We know this filter type
@@ -237,8 +237,8 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         curr_filter["list"] = True
         curr_filter["val"] = values
     elif (token.orth_ == "lower" and
-                  curr_filter.get("name", "") == "priority"
-          and "val" in curr_filter):
+            curr_filter.get("name", "") == "priority"
+            and "val" in curr_filter):
         # The user want all priorities lower than
         # the specified one.
         curr_val = curr_filter["val"]
@@ -285,12 +285,12 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
 def natural_to_query(query, user):
     trac_query = []
     logger.info("Processing query: %r", query)
-
+    query = query.lower()
     # Replace quoted string with unique ids, as the
     # user clearly wants us to interpret them as
     # single tokens
     texts = {}
-    inc = 1
+    inc = 0
     while True:
         repl = str(inc) + UNIQUE_M
         try:
@@ -303,7 +303,6 @@ def natural_to_query(query, user):
 
     logger.debug("Found text search: %s", texts)
     logger.debug("Query: %s", query)
-    query = query.lower()
     # Replace any fixed keywords provided in the
     # config file.
     for i, j in FIXED_QUERIES.items():

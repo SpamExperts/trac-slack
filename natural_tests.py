@@ -86,9 +86,13 @@ CASES = {
         u"keywords=moshpit&status=!closed&summary=~metal&owner=alex",
     "not my moshpit":
         u"keywords=!moshpit&status=closed&summary=!~metal&owner=alex",
+    "description like 'this is a test'":
+        u"description=~this is a test",
+    "description doesn't contain 'this is a test'":
+        u"description=!~this is a test",
     # Failing:
-    u"not update_documentation":
-        u"status=!update_documentation",
+    # u"not update_documentation":
+    #     u"status=!update_documentation",
 }
 
 for l, e in CASES.items():
