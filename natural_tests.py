@@ -3,10 +3,19 @@ import string
 import logging
 import hashlib
 import unittest
+import datetime
 
 user = "alex"
 random_sel = string.ascii_letters
 
+
+today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
+yesterday = datetime.datetime.utcnow() - datetime.timedelta(days=1)
+yesterday = yesterday.strftime("%Y-%m-%d")
+one_week = datetime.datetime.utcnow() - datetime.timedelta(days=7)
+one_week = one_week.strftime("%Y-%m-%d")
+two_week = datetime.datetime.utcnow() - datetime.timedelta(days=14)
+two_week = two_week.strftime("%Y-%m-%d")
 
 
 TEST_CONFIG = """
@@ -90,6 +99,10 @@ CASES = {
         u"description=~this is a test",
     "description doesn't contain 'this is a test'":
         u"description=!~this is a test",
+    "show closed bugs from 1 weeks ago to yesterday":
+        u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
+    "show my new features from 2 weeks ago":
+        u"status=new&type=feature&owner=alex&time=%s..%s" % (two_week, today),
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",

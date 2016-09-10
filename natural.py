@@ -6,6 +6,7 @@ import re
 import getpass
 import logging
 import argparse
+import datetime
 import functools
 
 try:
@@ -14,6 +15,7 @@ except ImportError:
     import ConfigParser as configparser
 
 import spacy.en
+import dateparser
 
 
 def load_configuration():
@@ -78,6 +80,12 @@ endings = {
 }
 mes = {
     "me", "my", "i",
+}
+start_date = {
+    "from",
+}
+end_date = {
+    "to",
 }
 
 match_re = re.compile(r"""
@@ -172,14 +180,15 @@ KNOWN.update({field.lower(): field
 
 
 def get_filter(token, texts, user, already_processed, curr_filter=None,
-               negates=False):
+               negates=False, level=0):
     if token in already_processed:
         return
 
     # If this is the first call, initialize the current
     # filter. By default the filter is not negated.
     if curr_filter is None:
-        curr_filter = {"not": False, "list": False, "status_tokens": set()}
+        curr_filter = {"not": False, "list": False, "status_tokens": set(),
+                       "extra_tokens": set()}
 
     full = "name" in curr_filter and "op" in curr_filter and "val" in curr_filter
     processed = True
@@ -267,7 +276,12 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         # this is likely the value.
         # XXX Risky assumption.
         curr_filter["val"] = token.orth_
+    elif token.orth_ in start_date and level == 0:
+        curr_filter["name"] = "from"
+    elif token.orth_ in end_date and level == 0:
+        curr_filter["name"] = "to"
     else:
+        curr_filter["extra_tokens"].add(token)
         processed = False
 
     if token.orth_ in TRANSLATE_STATUS_TOKENS:
@@ -283,8 +297,30 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
     # rest of the filter values.
     for child in token.children:
         get_filter(child, texts, user, already_processed, curr_filter,
-                   negates=negates)
+                   negates=negates, level=level+1)
     return curr_filter
+
+
+def parse_date(tokens):
+    # Try to order the tokens
+    stokens = []
+    number = None
+    dtype = None
+    for i in tokens:
+        stokens.append(i.orth_)
+        try:
+            number = int(i.orth_)
+            continue
+        except (TypeError, ValueError):
+            pass
+        if i.orth_ == "ago":
+            continue
+        dtype = i.orth_
+    result = dateparser.parse("%s %s ago" % (number, dtype))
+    if result is not None:
+        return result
+
+    return dateparser.parse(" ".join(stokens))
 
 
 def natural_to_query(query, user):
@@ -325,6 +361,8 @@ def natural_to_query(query, user):
     # wrongly reuse it in another filter.
     already_processed = []
     tokens = nlp(query.decode("utf8"))
+    start_time = None
+    end_time = None
     for token in tokens:
         logger.debug("Checking token: %s", token)
         if token in already_processed:
@@ -356,6 +394,26 @@ def natural_to_query(query, user):
         new_already_processed = list(already_processed)
         f = get_filter(token, texts, user, new_already_processed)
         logger.debug("Resulting filter: %s", f)
+
+        try:
+            assert f["name"] == "from"
+            assert start_time is None
+            start_time = parse_date(f["extra_tokens"])
+            assert start_time is not None
+            already_processed.extend(f["extra_tokens"])
+            continue
+        except (KeyError, AssertionError):
+            pass
+
+        try:
+            assert f["name"] == "to"
+            assert end_time is None
+            end_time = parse_date(f["extra_tokens"])
+            assert end_time is not None
+            already_processed.extend(f["extra_tokens"])
+            continue
+        except (KeyError, AssertionError):
+            pass
 
         try:
             # if f["not"]:
@@ -392,6 +450,14 @@ def natural_to_query(query, user):
                 trac_query.append("owner=!" + user)
             else:
                 trac_query.append("owner=" + user)
+
+    if start_time is not None or end_time is not None:
+        end_time = end_time or datetime.datetime.utcnow()
+        start_time = start_time or datetime.datetime.utcnow()
+        trac_query.append("time=%s..%s" % (
+            start_time.strftime("%Y-%m-%d"),
+            end_time.strftime("%Y-%m-%d"),
+        ))
 
     logger.info("Created query: %s", trac_query)
     return "&".join(trac_query)
