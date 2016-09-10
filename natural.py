@@ -80,7 +80,10 @@ mes = {
     "me", "my", "i",
 }
 
-match_re = re.compile(r'(?<=\s)(\'.*?\')|(?<=\s)(".*?")')
+match_re = re.compile(r"""
+    (?<=\s)(('.*?')|(".*?")) |
+    ^(('.*?')|(".*?"))
+""", re.X)
 
 
 def _is_something(tok, checks=None):
@@ -213,6 +216,8 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         # if "name" not in curr_filter:
         #     curr_filter["name"] = "description"
         #     curr_filter["op"] = "=~"
+        if "op" not in curr_filter:
+            curr_filter["op"] = "="
     elif token.lower_ in PRIORITIES and not full:
         # We already know the list of priorities
         # and this is an exact match.
