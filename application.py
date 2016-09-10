@@ -30,6 +30,7 @@ from flask import jsonify
 from mimerender import FlaskMimeRender
 
 import tracxml
+import natural
 
 
 def load_configuration():
@@ -39,6 +40,11 @@ def load_configuration():
             "user": "",
             "password": "",
             "limit": "35",
+            "components": "",
+            "priorities": "lowest,low,normal,high,highest",
+            "types": "bug,feature,task",
+            "extra_fields": "",
+            "statuses": ""
         },
         "slack": {
             "token": "",
@@ -230,15 +236,30 @@ class QueryTrac(flask.views.MethodView):
         text = flask.request.form["text"]
         try:
             command, query = text.split(None, 1)
-        except ValueError:
+            assert command.lower() in ("describe", "show", "query")
+        except (ValueError, AssertionError):
             # Try to figure out what the user wants
             try:
                 command, query = "describe", int(text.lstrip('#'))
             except (ValueError, TypeError):
-                command, query = "query", text
+                query = text
+                if "=" in text or "&" in text:
+                    command = "query"
+                else:
+                    command = "show"
+
         command = command.lower()
         if command == "describe":
             return self._handle_describe("id=%s" % query)
+
+        if command == "show":
+            query = natural.natural_to_query(query, "test")
+            if not query:
+                # Might be nice to have random responses.
+                return {
+                    "text": ("Didn't quite get that :(\n"
+                             "Try quoting your text searches.")}
+            return self._handle_query(query)
 
         if command == "query":
             return self._handle_query(query)
