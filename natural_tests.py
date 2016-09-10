@@ -16,6 +16,8 @@ priorities = lowest,low,normal,high,highest
 types = bug,feature,task
 extra_fields = points,requests
 statuses = assigned_branch_bug,assigned_bug,assigned_feature,assigned_task,assigned_trunk_feature,awaiting_deployment,closed,infoneeded_closed,merge_required,merge_required_branch_bug,needs_information,needs_testing_branch_bug,needs_testing_bug,needs_testing_feature,needs_testing_task,needs_testing_trunk_feature,new,testing_branch_bug,testing_bug,testing_feature,testing_task,testing_trunk_feature,update_documentation,waiting,working_branch_bug,working_bug,working_feature,working_task,working_trunk_feature
+[fixed_queries]
+moshpit = keywords=moshpit&status=!closed&summary=~metal
 """
 
 original_config = open("/etc/trac-slack.conf").read()
@@ -80,6 +82,10 @@ CASES = {
         u"status=!closed&type=bug&priority=high&priority=highest",
     "not assigned bugs low or lower":
         u"status=!assigned_bug&type=bug&priority=low&priority=lowest",
+    "my moshpit":
+        u"keywords=moshpit&status=!closed&summary=~metal&owner=alex",
+    "not my moshpit":
+        u"keywords=!moshpit&status=closed&summary=!~metal&owner=alex",
 }
 
 for l, e in CASES.items():

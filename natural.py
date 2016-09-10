@@ -28,6 +28,7 @@ def load_configuration():
             "extra_fields": "",
             "statuses": ""
         },
+        "fixed_queries": {},
         "slack": {
             "token": "",
             "endpoint": "/trac-slack"
@@ -94,40 +95,52 @@ is_exact = functools.partial(_is_something, checks=exacts)
 
 UNIQUE_C = "YlaQbS0ydqe8"
 UNIQUE_M = "WBsy0cNev3aV"
+UNIQUE_F = "57eaba821d58"
 
 # Order is important here.
-priorities = CONF.get("trac", "priorities").split(",")
+PRIORITIES = CONF.get("trac", "priorities").split(",")
 
-ticket_types = {_type: _type for _type in CONF.get("trac", "types").split(",")}
-ticket_types.update({_type + "s": _type for _type in ticket_types})
+TICKET_TYPES = {_type: _type for _type in CONF.get("trac", "types").split(",")}
+TICKET_TYPES.update({_type + "s": _type for _type in TICKET_TYPES})
 
 # XXX We should tokenize these the same way to tokenize
 # XXX status options.
-_components = CONF.get("trac", "components").split(",")
-components = {_comp.lower(): str(i) + UNIQUE_C
-              for i, _comp in enumerate(_components)}
-reversed_components = {str(i) + UNIQUE_C: _comp
-                       for i, _comp in enumerate(_components)}
+_COMPONENTS = CONF.get("trac", "components").split(",")
+COMPONENTS = {_comp.lower(): str(i) + UNIQUE_C
+              for i, _comp in enumerate(_COMPONENTS)}
+REVERSED_COMPONENTS = {str(i) + UNIQUE_C: _comp
+                       for i, _comp in enumerate(_COMPONENTS)}
 
-statuses = CONF.get("trac", "statuses").split(",")
+STATUSES = CONF.get("trac", "statuses").split(",")
 # Tokenize statuses as these can be compound words.
 # Stores a maping of a frozen set of tokens to the
 # actual status.
-tokenized_statuses = {}
-translate_status_tokens = {}
-for _status in statuses:
+TOKENIZED_STATUSES = {}
+TRANSLATE_STATUS_TOKENS = {}
+for _status in STATUSES:
     _status_tokens = set()
     for _status_token in _status.split("_"):
         _status_tokens.add(_status_token)
 
         # Add the status token to the translation dictionary.
         # Some token can have plural form so add them as wel.
-        translate_status_tokens[_status_token] = _status_token
+        TRANSLATE_STATUS_TOKENS[_status_token] = _status_token
         if _status_token.endswith("s"):
-            translate_status_tokens[_status_token[:-1]] = _status_token
+            TRANSLATE_STATUS_TOKENS[_status_token[:-1]] = _status_token
         else:
-            translate_status_tokens[_status_token + "s"] = _status_token
-    tokenized_statuses[frozenset(_status_tokens)] = _status
+            TRANSLATE_STATUS_TOKENS[_status_token + "s"] = _status_token
+    TOKENIZED_STATUSES[frozenset(_status_tokens)] = _status
+
+
+FIXED_QUERIES = {
+    _fixed: str(i) + UNIQUE_F
+    for i, _fixed in enumerate(CONF.options("fixed_queries"))
+}
+FIXED_QUERIES_REVERSED = {
+    str(i) + UNIQUE_F: _fixed
+    for i, _fixed in enumerate(CONF.options("fixed_queries"))
+}
+
 
 # Known filters names
 KNOWN = {
@@ -146,6 +159,7 @@ KNOWN = {
     "keyword": "keywords",
     "severity": "priority",
     "priority": "priority",
+    "milestone": "milestone",
 }
 # Add any custom trac fields to the known list.
 KNOWN.update({field.lower(): field
@@ -181,13 +195,13 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         curr_filter["op"] = "=^"
     elif token.lower_ in endings and "op" not in curr_filter:
         curr_filter["op"] = "=$"
-    elif token.orth_ in reversed_components and not full:
+    elif token.orth_ in REVERSED_COMPONENTS and not full:
         # The user made it easy, this is
         # a component filter.
         curr_filter["name"] = "component"
         if "op" not in curr_filter:
             curr_filter["op"] = "="
-        curr_filter["val"] = reversed_components[token.orth_]
+        curr_filter["val"] = REVERSED_COMPONENTS[token.orth_]
     elif token.orth_ in texts:
         # The user made it easy, this is a quoted
         # string, so it's the value.
@@ -198,27 +212,27 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         # if "name" not in curr_filter:
         #     curr_filter["name"] = "description"
         #     curr_filter["op"] = "=~"
-    elif token.lower_ in priorities and not full:
+    elif token.lower_ in PRIORITIES and not full:
         # We already know the list of priorities
         # and this is an exact match.
         curr_filter["name"] = "priority"
         if "op" not in curr_filter:
             curr_filter["op"] = "="
         curr_filter["val"] = token.orth_
-    elif token.lower_ in ticket_types and not full:
+    elif token.lower_ in TICKET_TYPES and not full:
         # We already know the list of ticket types
         # and this is an exact match.
         curr_filter["name"] = "type"
         if "op" not in curr_filter:
             curr_filter["op"] = "="
-        curr_filter["val"] = ticket_types[token.orth_]
+        curr_filter["val"] = TICKET_TYPES[token.orth_]
     elif (token.orth_ == "higher" and
               curr_filter.get("name", "") == "priority"
               and "val" in curr_filter):
         # The user want all priorities higher than
         # the specified one.
         curr_val = curr_filter["val"]
-        values = priorities[priorities.index(curr_val):]
+        values = PRIORITIES[PRIORITIES.index(curr_val):]
         curr_filter["list"] = True
         curr_filter["val"] = values
     elif (token.orth_ == "lower" and
@@ -227,10 +241,10 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         # The user want all priorities lower than
         # the specified one.
         curr_val = curr_filter["val"]
-        values = priorities[:priorities.index(curr_val) + 1]
+        values = PRIORITIES[:PRIORITIES.index(curr_val) + 1]
         curr_filter["list"] = True
         curr_filter["val"] = values
-    elif token.lower_ in statuses and not full:
+    elif token.lower_ in STATUSES and not full:
         # The user specified the exact status.
         curr_filter["name"] = "status"
         if "op" not in curr_filter:
@@ -250,8 +264,8 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
     else:
         processed = False
 
-    if token.orth_ in translate_status_tokens:
-        curr_filter["status_tokens"].add(translate_status_tokens[token.orth_])
+    if token.orth_ in TRANSLATE_STATUS_TOKENS:
+        curr_filter["status_tokens"].add(TRANSLATE_STATUS_TOKENS[token.orth_])
 
     if processed:
         already_processed.append(token)
@@ -291,9 +305,15 @@ def natural_to_query(query, user):
     query = query.lower()
     # Replace component names with unique ids
     # as those are known to us already
-    for i, j in components.items():
+    for i, j in COMPONENTS.items():
         query = query.replace(i, j)
     logger.debug("Replaced components %r", query)
+    # Replace any fixed keywords provided in the
+    # config file.
+    for i, j in FIXED_QUERIES.items():
+        query = query.replace(i, j)
+    logger.debug("Replaced fixed queries %r", query)
+
 
     # If we process and accept a token as part
     # of a filter while going through the
@@ -305,6 +325,23 @@ def natural_to_query(query, user):
         logger.debug("Checking token: %s", token)
         if token in already_processed:
             logger.debug("Already processed: %s", token)
+            continue
+
+        if token.orth_ in FIXED_QUERIES_REVERSED:
+            # The query is fixed by the config file for this keyword.
+            # Also check if is negated
+            fixed_query = CONF.get("fixed_queries",
+                                   FIXED_QUERIES_REVERSED[token.orth_])
+            if is_negated(token):
+                for fixed in fixed_query.split("&"):
+                    if "=!" in fixed:
+                        fixed = fixed.replace("=!", "=")
+                    else:
+                        fixed = fixed.replace("=", "=!")
+                    trac_query.append(fixed)
+            else:
+                trac_query.append(fixed_query)
+            already_processed.append(token)
             continue
 
         processed = False
@@ -336,7 +373,7 @@ def natural_to_query(query, user):
         # the known ones, and add a status filer.
         if f.get("name", "") != "status" or not processed:
             try:
-                status = tokenized_statuses[frozenset(f["status_tokens"])]
+                status = TOKENIZED_STATUSES[frozenset(f["status_tokens"])]
                 if f["not"]:
                     trac_query.append("status=!" + status)
                 else:
