@@ -7,6 +7,7 @@ import getpass
 import logging
 import argparse
 import functools
+
 try:
     import configparser
 except ImportError:
@@ -50,6 +51,7 @@ def load_configuration():
     if os.path.exists("/etc/trac-slack.conf"):
         conf.read("/etc/trac-slack.conf")
     return conf
+
 
 CONF = load_configuration()
 nlp = spacy.en.English()
@@ -131,16 +133,14 @@ for _status in STATUSES:
             TRANSLATE_STATUS_TOKENS[_status_token + "s"] = _status_token
     TOKENIZED_STATUSES[frozenset(_status_tokens)] = _status
 
-
 FIXED_QUERIES = {
     _fixed: str(i) + UNIQUE_F
     for i, _fixed in enumerate(CONF.options("fixed_queries"))
-}
+    }
 FIXED_QUERIES_REVERSED = {
     str(i) + UNIQUE_F: _fixed
     for i, _fixed in enumerate(CONF.options("fixed_queries"))
-}
-
+    }
 
 # Known filters names
 KNOWN = {
@@ -227,8 +227,8 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
             curr_filter["op"] = "="
         curr_filter["val"] = TICKET_TYPES[token.orth_]
     elif (token.orth_ == "higher" and
-              curr_filter.get("name", "") == "priority"
-              and "val" in curr_filter):
+                  curr_filter.get("name", "") == "priority"
+          and "val" in curr_filter):
         # The user want all priorities higher than
         # the specified one.
         curr_val = curr_filter["val"]
@@ -236,8 +236,8 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         curr_filter["list"] = True
         curr_filter["val"] = values
     elif (token.orth_ == "lower" and
-            curr_filter.get("name", "") == "priority"
-            and "val" in curr_filter):
+                  curr_filter.get("name", "") == "priority"
+          and "val" in curr_filter):
         # The user want all priorities lower than
         # the specified one.
         curr_val = curr_filter["val"]
@@ -251,11 +251,11 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
             curr_filter["op"] = "="
         curr_filter["val"] = token.orth_
     elif (token.lower_ in mes and not full and
-            "val" not in curr_filter):
+                  "val" not in curr_filter):
         curr_filter["val"] = user
     elif ("name" in curr_filter and "op" in curr_filter and
-            "val" not in curr_filter and
-            token.pos_ not in ("ADP", "DET", "PUNCT", "CONJ", "DET")
+                  "val" not in curr_filter and
+                  token.pos_ not in ("ADP", "DET", "PUNCT", "CONJ", "DET")
           ):
         # We already have the other two,
         # this is likely the value.
@@ -313,7 +313,6 @@ def natural_to_query(query, user):
     for i, j in FIXED_QUERIES.items():
         query = query.replace(i, j)
     logger.debug("Replaced fixed queries %r", query)
-
 
     # If we process and accept a token as part
     # of a filter while going through the
@@ -430,5 +429,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
