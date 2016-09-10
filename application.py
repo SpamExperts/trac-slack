@@ -234,7 +234,7 @@ class QueryTrac(flask.views.MethodView):
     @mimerender
     def post(self):
         text = flask.request.form["text"]
-        user = flask.request.form["user"]
+        user = flask.request.form["user_name"]
         try:
             command, query = text.split(None, 1)
             assert command.lower() in ("describe", "show", "query")
