@@ -152,7 +152,8 @@ KNOWN.update({field.lower(): field
               for field in CONF.get("trac", "extra_fields").split(",")})
 
 
-def get_filter(token, texts, user, already_processed, curr_filter=None):
+def get_filter(token, texts, user, already_processed, curr_filter=None,
+               negates=False):
     if token in already_processed:
         return
 
@@ -161,22 +162,26 @@ def get_filter(token, texts, user, already_processed, curr_filter=None):
     if curr_filter is None:
         curr_filter = {"not": False, "list": False, "status_tokens": set()}
 
-    logger.debug("Get Filter: %s (%s)", token, curr_filter)
+    full = "name" in curr_filter and "op" in curr_filter and "val" in curr_filter
+
     processed = True
-    if token.orth_ in KNOWN:
+    if token.orth_ in KNOWN and "name" not in curr_filter:
         # We know this filter type
         curr_filter["name"] = KNOWN[token.orth_]
-    elif token.lower_ in partials:
+    elif token.lower_ in partials and "op" not in curr_filter:
         curr_filter["op"] = "=~"
-    elif token.lower_ in exacts:
+    elif token.lower_ in exacts and "op" not in curr_filter:
         curr_filter["op"] = "="
     elif token.lower_ in negations:
         curr_filter["not"] = True
-    elif token.lower_ in startings:
+        # Any following token in the tree should be
+        # negated
+        negates = True
+    elif token.lower_ in startings and "op" not in curr_filter:
         curr_filter["op"] = "=^"
-    elif token.lower_ in endings:
+    elif token.lower_ in endings and "op" not in curr_filter:
         curr_filter["op"] = "=$"
-    elif token.orth_ in reversed_components:
+    elif token.orth_ in reversed_components and not full:
         # The user made it easy, this is
         # a component filter.
         curr_filter["name"] = "component"
@@ -193,14 +198,14 @@ def get_filter(token, texts, user, already_processed, curr_filter=None):
         # if "name" not in curr_filter:
         #     curr_filter["name"] = "description"
         #     curr_filter["op"] = "=~"
-    elif token.lower_ in priorities:
+    elif token.lower_ in priorities and not full:
         # We already know the list of priorities
         # and this is an exact match.
         curr_filter["name"] = "priority"
         if "op" not in curr_filter:
             curr_filter["op"] = "="
         curr_filter["val"] = token.orth_
-    elif token.lower_ in ticket_types:
+    elif token.lower_ in ticket_types and not full:
         # We already know the list of ticket types
         # and this is an exact match.
         curr_filter["name"] = "type"
@@ -225,16 +230,19 @@ def get_filter(token, texts, user, already_processed, curr_filter=None):
         values = priorities[:priorities.index(curr_val) + 1]
         curr_filter["list"] = True
         curr_filter["val"] = values
-    elif token.lower_ in statuses:
+    elif token.lower_ in statuses and not full:
         # The user specified the exact status.
         curr_filter["name"] = "status"
         if "op" not in curr_filter:
             curr_filter["op"] = "="
         curr_filter["val"] = token.orth_
-    elif token.lower_ in mes:
+    elif (token.lower_ in mes and not full and
+            "val" not in curr_filter):
         curr_filter["val"] = user
     elif ("name" in curr_filter and "op" in curr_filter and
-            "val" not in curr_filter):
+            "val" not in curr_filter and
+            token.pos_ not in ("ADP", "DET", "PUNCT", "CONJ", "DET")
+          ):
         # We already have the other two,
         # this is likely the value.
         # XXX Risky assumption.
@@ -247,11 +255,15 @@ def get_filter(token, texts, user, already_processed, curr_filter=None):
 
     if processed:
         already_processed.append(token)
+        if negates and "!" not in curr_filter.get("op", "!"):
+            curr_filter["op"] = curr_filter["op"].replace("=", "=!")
 
+    logger.debug("Get Filter: %s (%s)", token, curr_filter)
     # Go through the semantic tree and figure out the
     # rest of the filter values.
     for child in token.children:
-        get_filter(child, texts, user, already_processed, curr_filter)
+        get_filter(child, texts, user, already_processed, curr_filter,
+                   negates=negates)
     return curr_filter
 
 
@@ -276,6 +288,7 @@ def natural_to_query(query, user):
 
     logger.debug("Found text search: %s", texts)
     logger.debug("Query: %s", query)
+    query = query.lower()
     # Replace component names with unique ids
     # as those are known to us already
     for i, j in components.items():
@@ -304,8 +317,8 @@ def natural_to_query(query, user):
         logger.debug("Resulting filter: %s", f)
 
         try:
-            if f["not"]:
-                f["op"] = f["op"].replace("=", "=!")
+            # if f["not"]:
+            #     f["op"] = f["op"].replace("=", "=!")
             if f["val"] == "me":
                 f["val"] = user
             if not f["list"]:
@@ -325,7 +338,7 @@ def natural_to_query(query, user):
             try:
                 status = tokenized_statuses[frozenset(f["status_tokens"])]
                 if f["not"]:
-                    trac_query.append("status!=" + status)
+                    trac_query.append("status=!" + status)
                 else:
                     trac_query.append("status=" + status)
                 processed = True
