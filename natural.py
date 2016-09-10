@@ -100,7 +100,7 @@ is_partial = functools.partial(_is_something, checks=partials)
 is_exact = functools.partial(_is_something, checks=exacts)
 
 UNIQUE_C = "YlaQbS0ydqe8"
-UNIQUE_M = "WBsy0cNev3aV"
+UNIQUE_M = "wbsy0cnev3av"
 UNIQUE_F = "57eaba821d58"
 
 # Order is important here.
@@ -290,7 +290,7 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
 def natural_to_query(query, user):
     trac_query = []
     logger.info("Processing query: %r", query)
-    query = query.lower()
+
     # Replace quoted string with unique ids, as the
     # user clearly wants us to interpret them as
     # single tokens
@@ -305,7 +305,7 @@ def natural_to_query(query, user):
         texts[repl] = text.strip('"\'')
         query = match_re.sub(repl, query, 1)
         inc += 1
-
+    query = query.lower()
     logger.debug("Found text search: %s", texts)
     logger.debug("Query: %s", query)
     # Replace any fixed keywords provided in the
