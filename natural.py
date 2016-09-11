@@ -190,6 +190,28 @@ KNOWN = {
 # Add any custom trac fields to the known list.
 KNOWN.update({field.lower(): field
               for field in CONF.get("trac", "extra_fields").split(",")})
+NUMBERS = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19,
+    "twenty": 20,
+}
 
 
 def get_filter(token, texts, user, already_processed, curr_filter=None,
@@ -327,11 +349,12 @@ def parse_date(tokens, already_processed):
             break
         if i.pos_ == "DET":
             continue
-        stokens.append(i.orth_)
+        value = NUMBERS.get(i.lower_, i.lower_)
+        stokens.append(value)
         rtokens.append(i)
 
         try:
-            number = int(i.orth_)
+            number = int(value)
             continue
         except (TypeError, ValueError):
             pass

@@ -99,6 +99,8 @@ CASES = {
         u"description=~this is a test",
     "description doesn't contain 'this is a test'":
         u"description=!~this is a test",
+    "show closed bugs from one week ago to yesterday":
+        u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
     "show closed bugs from 1 weeks ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
     "show my new features from 2 weeks ago":
