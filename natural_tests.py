@@ -74,9 +74,9 @@ CASES = {
         u"summary=^tests&owner=alex",
     "my assigned features where summary ends with tests":
         u"summary=$tests&owner=alex&status=assigned_feature&type=feature",
-    "my tickets normal of higher":
+    "my tickets normal or higher":
         u"priority=normal&priority=high&priority=highest&owner=alex",
-    "my tickets normal of lower":
+    "my tickets normal or lower":
         u"priority=lowest&priority=low&priority=normal&owner=alex",
     "tickets where I'm in cc":
         u"cc=alex",
