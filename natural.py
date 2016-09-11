@@ -27,7 +27,7 @@ def load_configuration():
             "limit": "35",
             "components": "",
             "priorities": "lowest,low,normal,high,highest",
-            "types": "bug,feature,task",
+            "types": "defect,enhancement,task",
             "extra_fields": "",
             "statuses": ""
         },
