@@ -16,6 +16,7 @@ class RequestsTransport(client.Transport):
     proto = "http"
     # This might work, but haven't tested
     accept_gzip_encoding = False
+    _content_type = "text/xml"
 
     def __init__(self, use_datetime=0):
         client.Transport.__init__(self, use_datetime=use_datetime)
@@ -45,7 +46,7 @@ class RequestsTransport(client.Transport):
             self.auth_trac(host, auth_details)
 
         headers = {"User-Agent": self.user_agent,
-                   "Content-Type": "text/xml"}
+                   "Content-Type": self._content_type}
         if self._extra_headers:
             headers.update(dict(self._extra_headers))
 
@@ -59,7 +60,7 @@ class RequestsTransport(client.Transport):
         response.close()
 
         raise client.ProtocolError(host + handler, response.status_codes,
-                                      response.reason, "")
+                                   response.reason, "")
 
     def parse_response(self, response):
         p, u = self.getparser()
@@ -78,3 +79,75 @@ class RequestsTransport(client.Transport):
 class SafeRequestsTransport(RequestsTransport):
     proto = "https"
 
+
+try:
+    import jsonrpclib.jsonrpc
+except ImportError:
+    pass
+else:
+    import json
+    import datetime
+
+    class JSONRequestsTransport(RequestsTransport):
+        """Extends the XMLRPC transport where necessary."""
+        _connection = (None, None)
+        _extra_headers = []
+        _content_type = "application/json"
+
+        def send_content(self, connection, request_body):
+            connection.putheader("Content-Type", "application/json")
+            connection.putheader("Content-Length", str(len(request_body)))
+            connection.endheaders()
+            if request_body:
+                connection.send(request_body)
+
+        def getparser(self):
+            target = jsonrpclib.jsonrpc.JSONTarget()
+            return jsonrpclib.jsonrpc.JSONParser(target), target
+
+    class SafeJSONRequestsTransport(JSONRequestsTransport):
+        proto = "https"
+
+
+    def _recursive_to_datetime(data):
+        """Iterate through this object converting datetime objects."""
+        if isinstance(data, basestring):
+            # Strings are iterable, but don't contain other objects
+            # (other than shorter strings).
+            return data
+        try:
+            data_type, data_value = data["__jsonclass__"]
+            assert data_type == "datetime"
+        except (TypeError, IndexError, KeyError):
+            # This is not a dictionary, or not the special one.
+            pass
+        else:
+            return datetime.datetime.strptime(data_value,
+                                              "%Y-%m-%dT%H:%M:%S")
+        if hasattr(data, "items"):
+            new_dict = {}
+            for key, value in data.items():
+                key = _recursive_to_datetime(key)
+                value = _recursive_to_datetime(value)
+                new_dict[key] = value
+            return new_dict
+        try:
+            new_iter = data.__class__()
+            for item in data:
+                new_iter += data.__class__([_recursive_to_datetime(item)])
+            return new_iter
+        except TypeError:
+            return data
+
+
+    def loads(data):
+        """Convert timestamp data to appropriate formats."""
+        # We also skip past the jsonclass and jloads stuff since we are
+        # not using that.
+        if data == "":
+            # Notification.
+            return None
+        result = json.loads(data)
+        return _recursive_to_datetime(result)
+
+    jsonrpclib.jsonrpc.loads = loads
