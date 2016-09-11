@@ -127,6 +127,8 @@ CASES = {
         u"status=merge_required",
     "show tickets that require merging":
         u"status=merge_required",
+    "bugs assigned to me":
+        u"type=bug&owner=alex",
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",

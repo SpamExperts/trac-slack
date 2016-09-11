@@ -54,7 +54,7 @@ endings = {
     "ends", "end"
 }
 mes = {
-    "me", "my", "i",
+    "me", "my", "i", "tome",
 }
 start_date = {
     "from", "since", "after",
@@ -86,7 +86,9 @@ REPL = {
     "is not": "isnot",
     "not like": "notlike",
     "is not in": "isnotin",
+    "to me": "tome",
 }
+
 
 def _is_something(tok, checks=None):
     if checks is None:
@@ -538,7 +540,7 @@ def natural_to_query(query, user):
                 pass
 
         # Not always right, but good enough.
-        if token.lower_ == "my" and not processed:
+        if token.lower_ in ("my", "tome") and not processed:
             if is_negated(token):
                 trac_query.append("owner=!" + user)
             else:
