@@ -64,43 +64,69 @@ def create_test(language, expected):
 
 
 CASES = {
+    # Simple "MY tickets"
     "my tickets":
         u"owner=alex",
     "my bug tickets":
         u"owner=alex&type=bug",
     "my not closed tickets":
         u"owner=alex&status=!closed",
+    "bugs assigned to me":
+        u"type=bug&owner=alex",
+    # Check resolution
+    "show fixed bugs tickets":
+        u"type=bug&resolution=fixed",
+    # Component tests
     "Internal Systems not closed bugs":
         u"component=Internal Systems&type=bug&status=!closed",
+    # Stars/ends with filters
     "summary starts with tests, owner is alex":
         u"summary=^tests&owner=alex",
     "my assigned features where summary ends with tests":
         u"summary=$tests&owner=alex&status=assigned_feature&type=feature",
+    # Higher or normal modifiers
     "my tickets normal or higher":
         u"priority=normal&priority=high&priority=highest&owner=alex",
     "my tickets normal or lower":
         u"priority=lowest&priority=low&priority=normal&owner=alex",
+    # Check I'm in partial filter
     "tickets where I'm in cc":
         u"cc=~alex",
     "tickets where I'm not in cc":
         u"cc=!~alex",
     "not closed tickets where I'm in cc":
         u"status=!closed&cc=~alex",
+    # Check I have
+    "show tickets I've reported":
+        u"reporter=alex",
+    # Check complex status build up
     "my pyzor assigned trunk features":
         u"owner=alex&status=assigned_trunk_feature&type=feature&component"
         u"=Pyzor",
+    "show tickets that require being merged":
+        u"status=merge_required",
+    "show tickets that require merging":
+        u"status=merge_required",
+    # Check that the NOT applies to the correct filter
     "not closed bugs high or higher":
         u"status=!closed&type=bug&priority=high&priority=highest",
     "not assigned bugs low or lower":
         u"status=!assigned_bug&type=bug&priority=low&priority=lowest",
+    "show not closed tickets not in merge required":
+        u"status=!closed&status=!merge_required",
+    # Check custom fixed queries specified in the config
     "my moshpit":
         u"keywords=moshpit&status=!closed&summary=~metal&owner=alex",
     "not my moshpit":
         u"keywords=!moshpit&status=closed&summary=!~metal&owner=alex",
+    "show last headbang tickets":
+        u"reporter=alex&milestone=%s" % now.strftime("%B %Y"),
+    # Check quoting the values
     "description like 'this is a test'":
         u"description=~this is a test",
     "description doesn't contain 'this is a test'":
         u"description=!~this is a test",
+    # Time and changetime tests
     "show closed bugs from one week ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
     "show closed bugs changed since one week ago to yesterday":
@@ -134,20 +160,10 @@ CASES = {
         u"type=bug&time=2016-07-26..2016-08-27",
     "bug tickets changed after the 26th of july but before the 27th of August":
         u"type=bug&changetime=2016-07-26..2016-08-27",
-    "show tickets I've reported":
-        u"reporter=alex",
-    "show last headbang tickets":
-        u"reporter=alex&milestone=%s" % now.strftime("%B %Y"),
-    "show not closed tickets not in merge required":
-        u"status=!closed&status=!merge_required",
-    "show tickets that require being merged":
-        u"status=merge_required",
-    "show tickets that require merging":
-        u"status=merge_required",
-    "bugs assigned to me":
-        u"type=bug&owner=alex",
-    "show fixed bugs tickets":
-        u"type=bug&resolution=fixed",
+    "task tickets opened in the last two weeks":
+        u"type=task&time=%s..%s" % (two_week, today),
+    "normal feature tickets changed in the last two weeks":
+        u"type=feature&priority=normal&changetime=%s..%s" % (two_week, today),
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",

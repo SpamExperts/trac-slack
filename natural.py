@@ -389,7 +389,7 @@ def parse_date(tokens, already_processed):
                 continue
             except (TypeError, ValueError):
                 pass
-        if i.orth_ == "ago" and not ago:
+        if i.orth_ in ("ago", "last") and not ago:
             ago = True
             ago_tokens.append(i)
             continue
