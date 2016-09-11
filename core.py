@@ -17,7 +17,8 @@ def load_configuration():
             "priorities": "lowest,low,normal,high,highest",
             "types": "defect,enhancement,task",
             "extra_fields": "",
-            "statuses": ""
+            "statuses": "",
+            "resolutions": "fixed,invalid,wontfix,duplicate,worksforme,cantfix",
         },
         "fixed_queries": {},
         "slack": {

@@ -187,6 +187,9 @@ KNOWN = {
 # Add any custom trac fields to the known list.
 KNOWN.update({field.lower(): field
               for field in CONF.get("trac", "extra_fields").split(",")})
+
+RESOLUTIONS = CONF.get("trac", "resolutions").split(",")
+
 NUMBERS = {
     "one": 1,
     "two": 2,
@@ -307,6 +310,12 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
     elif token.lower_ in STATUSES and not full:
         # The user specified the exact status.
         curr_filter["name"] = "status"
+        if "op" not in curr_filter:
+            curr_filter["op"] = "="
+        curr_filter["val"] = token.orth_
+    elif token.lower_ in RESOLUTIONS and not full:
+        # The user specified the exact resolution.
+        curr_filter["name"] = "resolution"
         if "op" not in curr_filter:
             curr_filter["op"] = "="
         curr_filter["val"] = token.orth_
