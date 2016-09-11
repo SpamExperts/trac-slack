@@ -79,11 +79,11 @@ CASES = {
     "my tickets normal or lower":
         u"priority=lowest&priority=low&priority=normal&owner=alex",
     "tickets where I'm in cc":
-        u"cc=alex",
+        u"cc=~alex",
     "tickets where I'm not in cc":
-        u"cc=!alex",
+        u"cc=!~alex",
     "not closed tickets where I'm in cc":
-        u"status=!closed&cc=alex",
+        u"status=!closed&cc=~alex",
     "my pyzor assigned trunk features":
         u"owner=alex&status=assigned_trunk_feature&type=feature&component"
         u"=Pyzor",

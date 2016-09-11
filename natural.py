@@ -25,11 +25,16 @@ negations = {
 partials = {
     "has", "like", "contains", "alike", "related", "close", "matching",
     "near", "matching", "akin", "relating", "resembling", "fuzzy",
-    "contain",
+    "contain", "in", "isin",
+}
+negated_partials = {
+    "notin", "notlike", "isnotin",
 }
 exacts = {
-    "is", "exactly", "exact", "equals", "same", "identical", "specific", "'m",
-    "am", "are"
+    "is", "exactly", "exact", "equals", "same", "identical", "specific",
+}
+negated_exacts = {
+    "isnot",
 }
 startings = {
     "starts", "start", "begin", "begins"
@@ -64,7 +69,13 @@ date_re = re.compile(r"""
     (:?\s|$)
 )
 """, re.X | re.M)
-
+REPL = {
+    "is in": "isin",
+    "not in": "notin",
+    "is not": "isnot",
+    "not like": "notlike",
+    "is not in": "isnotin",
+}
 
 def _is_something(tok, checks=None):
     if checks is None:
@@ -191,8 +202,12 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         curr_filter["name"] = KNOWN[token.orth_]
     elif token.lower_ in partials and "op" not in curr_filter:
         curr_filter["op"] = "=~"
+    elif token.lower_ in negated_partials and "op" not in curr_filter:
+        curr_filter["op"] = "=!~"
     elif token.lower_ in exacts and "op" not in curr_filter:
         curr_filter["op"] = "="
+    elif token.lower_ in negated_exacts and "op" not in curr_filter:
+        curr_filter["op"] = "=!"
     elif token.lower_ in negations:
         curr_filter["not"] = True
         # Any following token in the tree should be
@@ -286,7 +301,7 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         if negates and "!" not in curr_filter.get("op", "!"):
             curr_filter["op"] = curr_filter["op"].replace("=", "=!")
 
-    logger.debug("Get Filter: %s (%s)", token, curr_filter)
+    logger.debug("Get Filter (level:%s): %s (%s)", level, token, curr_filter)
     # Go through the semantic tree and figure out the
     # rest of the filter values.
     for child in token.children:
@@ -369,6 +384,9 @@ def natural_to_query(query, user):
     for i, j in COMPONENTS.items():
         query = query.replace(i, j)
     logger.debug("Replaced components %r", query)
+    for i, j in REPL.items():
+        query = query.replace(i, j)
+    logger.debug("Replaced expressions %r", query)
 
     # If we process and accept a token as part
     # of a filter while going through the
