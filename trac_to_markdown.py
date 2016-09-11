@@ -18,7 +18,7 @@ FLAVOURS = {
     "mrkdwn": {
         "bold": r"*\1*",
         "italic": r"_\1_",
-        "ul": u"•\\2",
+        "ul": u"\\1•\\2",
         "ol": r"\1\2",
         "wiki_link": r"<%s/wiki/\1|\2>",
         "ticket_link": r"<%s/ticket/\1|\2>",
@@ -65,9 +65,9 @@ def convert(text, base="", flavour="markdown"):
     text = re.sub(r"=\s+(.+?)\s+=", r"# \1", text)
 
     # Convert lists.
-    text = re.sub(r"(^\s\*)(\s)", transforms["ul"], text, flags=re.MULTILINE)
-    text = re.sub(r"(^\s\-)(\s)", transforms["ul"], text, flags=re.MULTILINE)
-    text = re.sub(r"^\s(\d+)\.(\s)", transforms["ol"], text,
+    text = re.sub(r"(^\s+)\*(\s)", transforms["ul"], text, flags=re.MULTILINE)
+    text = re.sub(r"(^\s+)\-(\s)", transforms["ul"], text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s+\d+)\.(\s)", transforms["ol"], text,
                   flags=re.MULTILINE)
 
     # Convert links.
