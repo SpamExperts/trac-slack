@@ -1,7 +1,16 @@
 """Process commands in natural language."""
+
+# This would have been interesting to be done with actual training
+# of a large corpus of sentence -> query and creating a decision
+# tree based on that.
+# However because the term list is limited to a very specific set
+# of keywords, doing this heuristically is very likely a LOT more
+# accurate.
+# It might be curios to see how a trained classifier would do compared
+# to the heuristic one. Or have one as a fall-back.
+
 from __future__ import print_function
 
-import os
 import re
 import getpass
 import logging
