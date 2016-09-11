@@ -31,7 +31,7 @@ def load_configuration():
             "user": "www-data",
         }
     }
-    conf = configparser.ConfigParser()
+    conf = configparser.RawConfigParser()
     # Load in default values.
     for section, values in defaults.items():
         conf.add_section(section)

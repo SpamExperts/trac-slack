@@ -13,6 +13,7 @@ from core import load_configuration
 
 import spacy.en
 import dateparser
+from dateutil.relativedelta import relativedelta
 
 CONF = load_configuration()
 nlp = spacy.en.English()
@@ -397,6 +398,20 @@ def natural_to_query(query, user):
         query = query.replace(i, j)
     logger.debug("Replaced expressions %r", query)
 
+    now = datetime.datetime.utcnow()
+
+    fixed_interpolation = {
+        "user": user,
+        "month": now.strftime("%B"),
+        "year": now.strftime("%Y"),
+        "day": now.strftime("%d"),
+        "last_month": (now - relativedelta(months=1)).strftime("%B"),
+        "last_month_year":
+            (now - relativedelta(months=1)).strftime("%Y"),
+        "last_year": (now - relativedelta(years=1)).strftime("%Y"),
+        "yesterday": (now - relativedelta(days=1)).strftime("%d"),
+    }
+
     # If we process and accept a token as part
     # of a filter while going through the
     # semantic tree, store it here, so we don't
@@ -416,6 +431,7 @@ def natural_to_query(query, user):
             # Also check if is negated
             fixed_query = CONF.get("fixed_queries",
                                    FIXED_QUERIES_REVERSED[token.orth_])
+            fixed_query = fixed_query % fixed_interpolation
             if is_negated(token):
                 for fixed in fixed_query.split("&"):
                     if "=!" in fixed:
