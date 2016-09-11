@@ -122,12 +122,26 @@ for _status in STATUSES:
         _status_tokens.add(_status_token)
 
         # Add the status token to the translation dictionary.
+        # These are FAR from being accurate, but they get the
+        # job done most of the time.
+        # XXX It might be better to extrapolate the actual
+        # XXX format/tenses here from a dictionary.
+
         # Some token can have plural form so add them as wel.
         TRANSLATE_STATUS_TOKENS[_status_token] = _status_token
         if _status_token.endswith("s"):
             TRANSLATE_STATUS_TOKENS[_status_token[:-1]] = _status_token
         else:
             TRANSLATE_STATUS_TOKENS[_status_token + "s"] = _status_token
+        # Add some of the past tense
+        if _status_token.endswith("ed"):
+            TRANSLATE_STATUS_TOKENS[_status_token[:-2]] = _status_token
+            TRANSLATE_STATUS_TOKENS[_status_token[:-2] + "ing"] = _status_token
+            TRANSLATE_STATUS_TOKENS[_status_token[:-1]] = _status_token
+        # Gerund formats
+        if _status_token.endswith("e"):
+            TRANSLATE_STATUS_TOKENS[_status_token + "d"] = _status_token
+            TRANSLATE_STATUS_TOKENS[_status_token[:-1] + "ing"] = _status_token
     TOKENIZED_STATUSES[frozenset(_status_tokens)] = _status
 
 FIXED_QUERIES = {
@@ -189,8 +203,9 @@ NUMBERS = {
 def get_filter(token, texts, user, already_processed, curr_filter=None,
                negates=False, level=0):
     if token in already_processed:
+        logger.debug("Skipped Filter (level:%s): %s (%s)", level, token,
+                     curr_filter)
         return
-
     # If this is the first call, initialize the current
     # filter. By default the filter is not negated.
     if curr_filter is None:
@@ -206,11 +221,19 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         curr_filter["op"] = "=~"
     elif token.lower_ in negated_partials and "op" not in curr_filter:
         curr_filter["op"] = "=!~"
+        curr_filter["not"] = True
+        # Any following token in the tree should be
+        # negated
+        negates = True
     elif token.lower_ in exacts and "op" not in curr_filter:
         curr_filter["op"] = "="
     elif token.lower_ in negated_exacts and "op" not in curr_filter:
         curr_filter["op"] = "=!"
-    elif token.lower_ in negations:
+        curr_filter["not"] = True
+        # Any following token in the tree should be
+        # negated
+        negates = True
+    elif token.lower_ in negations and not curr_filter["not"]:
         curr_filter["not"] = True
         # Any following token in the tree should be
         # negated
@@ -296,7 +319,7 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         processed = False
 
     if token.orth_ in TRANSLATE_STATUS_TOKENS:
-        curr_filter["status_tokens"].add(TRANSLATE_STATUS_TOKENS[token.orth_])
+        curr_filter["status_tokens"].add(token)
 
     if processed:
         already_processed.append(token)
@@ -492,12 +515,15 @@ def natural_to_query(query, user):
         # Check if any of the gathered status tokens match
         # the known ones, and add a status filer.
         if f.get("name", "") != "status" or not processed:
+            status_tokens = frozenset([TRANSLATE_STATUS_TOKENS[t.orth_]
+                                       for t in f["status_tokens"]])
             try:
-                status = TOKENIZED_STATUSES[frozenset(f["status_tokens"])]
+                status = TOKENIZED_STATUSES[status_tokens]
                 if f["not"]:
                     trac_query.append("status=!" + status)
                 else:
                     trac_query.append("status=" + status)
+                already_processed.extend(f["status_tokens"])
                 processed = True
             except KeyError:
                 pass

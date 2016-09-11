@@ -9,6 +9,7 @@ user = "alex"
 random_sel = string.ascii_letters
 
 
+now = datetime.datetime.utcnow()
 today = datetime.datetime.utcnow().strftime("%Y-%m-%d")
 yesterday = datetime.datetime.utcnow() - datetime.timedelta(days=1)
 yesterday = yesterday.strftime("%Y-%m-%d")
@@ -27,6 +28,7 @@ extra_fields = points,requests
 statuses = assigned_branch_bug,assigned_bug,assigned_feature,assigned_task,assigned_trunk_feature,awaiting_deployment,closed,infoneeded_closed,merge_required,merge_required_branch_bug,needs_information,needs_testing_branch_bug,needs_testing_bug,needs_testing_feature,needs_testing_task,needs_testing_trunk_feature,new,testing_branch_bug,testing_bug,testing_feature,testing_task,testing_trunk_feature,update_documentation,waiting,working_branch_bug,working_bug,working_feature,working_task,working_trunk_feature
 [fixed_queries]
 moshpit = keywords=moshpit&status=!closed&summary=~metal
+last headbang = reporter=%(user)s&milestone=%(month)s %(year)s
 """
 
 original_config = open("/etc/trac-slack.conf").read()
@@ -117,6 +119,14 @@ CASES = {
         u"type=bug&time=2016-07-26..2016-08-27",
     "show tickets I've reported":
         u"reporter=alex",
+    "show last headbang tickets":
+        u"reporter=alex&milestone=%s" % now.strftime("%B %Y"),
+    "show not closed tickets not in merge required":
+        u"status=!closed&status=!merge_required",
+    "show tickets that require being merged":
+        u"status=merge_required",
+    "show tickets that require merging":
+        u"status=merge_required",
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",
