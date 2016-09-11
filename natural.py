@@ -351,6 +351,14 @@ def parse_date(tokens, already_processed):
         already_processed.extend(rtokens)
         return result
 
+    stokens.reverse()
+    logger.debug("Trying to extract date from: %s", stokens)
+    result = dateparser.parse(" ".join(stokens))
+    if result is not None:
+        logger.debug("Extracted date %s from %s", result, stokens)
+        already_processed.extend(rtokens)
+        return result
+
 
 def natural_to_query(query, user):
     trac_query = []
