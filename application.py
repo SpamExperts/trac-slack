@@ -7,10 +7,6 @@ import calendar
 import functools
 
 try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-try:
     from xmlrpc import client
 except ImportError:
     import xmlrpclib as client
@@ -31,39 +27,10 @@ from flask import jsonify
 from mimerender import FlaskMimeRender
 
 import tracxml
+import natural
 import trac_to_markdown
 
-
-def load_configuration():
-    defaults = {
-        "trac": {
-            "host": "",
-            "user": "",
-            "password": "",
-            "limit": "35",
-        },
-        "slack": {
-            "token": "",
-            "endpoint": "/trac-slack"
-        },
-        "logging": {
-            "file": "/var/log/trac-slack.log",
-            "level": "INFO",
-            "sentry": "",
-            "user": "www-data",
-        }
-    }
-    conf = configparser.ConfigParser()
-    # Load in default values.
-    for section, values in defaults.items():
-        conf.add_section(section)
-        for option, value in values.items():
-            conf.set(section, option, value)
-
-    if os.path.exists("/etc/trac-slack.conf"):
-        conf.read("/etc/trac-slack.conf")
-    return conf
-
+from core import load_configuration
 
 CONF = load_configuration()
 # This is the WSGI application that we are creating.
@@ -255,17 +222,33 @@ class QueryTrac(flask.views.MethodView):
     @mimerender
     def post(self):
         text = flask.request.form["text"]
+        user = flask.request.form["user_name"]
         try:
             command, query = text.split(None, 1)
-        except ValueError:
+            assert command.lower() in ("describe", "show", "query")
+        except (ValueError, AssertionError):
             # Try to figure out what the user wants
             try:
                 command, query = "describe", int(text.lstrip('#'))
             except (ValueError, TypeError):
-                command, query = "query", text
+                query = text
+                if "=" in text or "&" in text:
+                    command = "query"
+                else:
+                    command = "show"
+
         command = command.lower()
         if command == "describe":
             return self._handle_describe("id=%s" % query)
+
+        if command == "show":
+            query = natural.natural_to_query(query, user)
+            if not query:
+                # Might be nice to have random responses.
+                return {
+                    "text": ("Didn't quite get that :(\n"
+                             "Try quoting your text searches.")}
+            return self._handle_query(query)
 
         if command == "query":
             return self._handle_query(query)
