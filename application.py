@@ -109,6 +109,22 @@ else:
         transport=tracxml.SafeJSONRequestsTransport()
     )
 
+INTRO = (u"Trac slash command allows you to query Trac tickets from slack. The "
+         u"Trac slash command will do it's best to interpret your query from "
+         u"english, and translate to a Trac query. Some examples include:")
+
+BODY_TEXT = u"""
+ • `/trac 12354` - to view detailed specifications of a ticket
+ • `/trac query status=new&type=task&priority=normal` - to view a list of tickets matching this query
+ • `/trac show my tickets` - to list all tickets assigned to you
+ • `/trac show my normal or higher bug tickets`
+ • `/trac list task tickets opened in the last three weeks`
+ • `/trac list tickets where I'm in the cc`
+ • `/trac list feature tickets that need testing modified in the last week`
+ • `/trac text like "Some error I know", opened two months ago`
+"""
+
+HELP_TEXT = INTRO + BODY_TEXT
 
 QUERY_TEMPLATE = (u" • <https://%(host)s/ticket/%(number)s|#%(number)s> "
                   u"- %(summary)s")
@@ -221,10 +237,15 @@ class QueryTrac(flask.views.MethodView):
             ]
         }
 
+    def handle_help(self):
+        return {"text": HELP_TEXT}
+
     @mimerender
     def post(self):
         text = flask.request.form["text"]
         user = flask.request.form["user_name"]
+        if text.lower() == "help":
+            return self.handle_help()
         try:
             command, query = text.split(None, 1)
             assert command.lower() in ("describe", "show", "query")
@@ -248,8 +269,8 @@ class QueryTrac(flask.views.MethodView):
             if not query:
                 # Might be nice to have random responses.
                 return {
-                    "text": ("Didn't quite got that :thinking_face: \n"
-                             "HAve you tried quoting your text searches?")}
+                    "text": ("Didn't quite get that :thinking_face: \n"
+                             "Have you tried quoting your text searches?")}
             return self._handle_query(query)
 
         if command == "query":
