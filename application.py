@@ -110,7 +110,7 @@ else:
     )
 
 INTRO = (u"Trac slash command allows you to query Trac tickets from slack. The "
-         u"Trac slash command will do it's best to interpret your query from "
+         u"Trac slash command will do its best to interpret your query from "
          u"english, and translate to a Trac query. Some examples include:")
 
 BODY_TEXT = u"""
