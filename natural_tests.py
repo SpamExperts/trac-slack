@@ -74,7 +74,7 @@ CASES = {
     "bugs assigned to me":
         u"type=bug&owner=alex",
     # Check resolution
-    "show fixed bugs tickets":
+    "fixed bugs tickets":
         u"type=bug&resolution=fixed",
     # Component tests
     "Internal Systems not closed bugs":
@@ -97,29 +97,29 @@ CASES = {
     "not closed tickets where I'm in cc":
         u"status=!closed&cc=~alex",
     # Check I have
-    "show tickets I've reported":
+    "tickets I've reported":
         u"reporter=alex",
     # Check complex status build up
     "my pyzor assigned trunk features":
         u"owner=alex&status=assigned_trunk_feature&type=feature&component"
         u"=Pyzor",
-    "show tickets that require being merged":
+    "tickets that require being merged":
         u"status=merge_required",
-    "show tickets that require merging":
+    "tickets that require merging":
         u"status=merge_required",
     # Check that the NOT applies to the correct filter
     "not closed bugs high or higher":
         u"status=!closed&type=bug&priority=high&priority=highest",
     "not assigned bugs low or lower":
         u"status=!assigned_bug&type=bug&priority=low&priority=lowest",
-    "show not closed tickets not in merge required":
+    "not closed tickets not in merge required":
         u"status=!closed&status=!merge_required",
     # Check custom fixed queries specified in the config
     "my moshpit":
         u"keywords=moshpit&status=!closed&summary=~metal&owner=alex",
     "not my moshpit":
         u"keywords=!moshpit&status=closed&summary=!~metal&owner=alex",
-    "show last headbang tickets":
+    "last headbang tickets":
         u"reporter=alex&milestone=%s" % now.strftime("%B %Y"),
     # Check quoting the values
     "description like 'this is a test'":
@@ -127,17 +127,17 @@ CASES = {
     "description doesn't contain 'this is a test'":
         u"description=!~this is a test",
     # Time and changetime tests
-    "show closed bugs from one week ago to yesterday":
+    "closed bugs from one week ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
-    "show closed bugs changed since one week ago to yesterday":
+    "closed bugs changed since one week ago to yesterday":
         u"status=closed&type=bug&changetime=%s..%s" % (one_week, yesterday),
-    "show closed bugs from 1 weeks ago to yesterday":
+    "closed bugs from 1 weeks ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
-    "show closed modified bugs from 1 weeks ago to yesterday":
+    "closed modified bugs from 1 weeks ago to yesterday":
         u"status=closed&type=bug&changetime=%s..%s" % (one_week, yesterday),
-    "show my new features from 2 weeks ago":
+    "my new features from 2 weeks ago":
         u"status=new&type=feature&owner=alex&time=%s..%s" % (two_week, today),
-    "show my new features changed since 2 weeks ago":
+    "my new features changed since 2 weeks ago":
         u"status=new&type=feature&owner=alex&changetime=%s..%s" % (two_week,
                                                                    today),
     "my bug tickets since 2016-01-01":
@@ -170,6 +170,10 @@ CASES = {
 }
 
 for l, e in CASES.items():
+    case = create_test(l, e)
+    case_name = "test_" + hashlib.md5(l).hexdigest()
+    setattr(NaturalTest, case_name, case)
+    l = "show " + l
     case = create_test(l, e)
     case_name = "test_" + hashlib.md5(l).hexdigest()
     setattr(NaturalTest, case_name, case)

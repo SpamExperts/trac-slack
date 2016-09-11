@@ -231,7 +231,11 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
     if curr_filter is None:
         curr_filter = {"not": False, "list": False, "status_tokens": set(),
                        "extra_tokens": []}
-
+    original_curr_filter = {
+        "name": curr_filter.get("name", None),
+        "op": curr_filter.get("op", None),
+        "val": curr_filter.get("val", None),
+    }
     full = "name" in curr_filter and "op" in curr_filter and "val" in curr_filter
     processed = True
     if token.orth_ in KNOWN and "name" not in curr_filter:
@@ -353,7 +357,9 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         already_processed.append(token)
         if negates and "!" not in curr_filter.get("op", "!"):
             curr_filter["op"] = curr_filter["op"].replace("=", "=!")
-
+    for k, v in original_curr_filter.items():
+        if curr_filter.get(k, None) != v:
+            curr_filter[k + "_"] = token
     logger.debug("Get Filter (level:%s): %s (%s)", level, token, curr_filter)
     # Go through the semantic tree and figure out the
     # rest of the filter values.
@@ -553,7 +559,9 @@ def natural_to_query(query, user):
                 trac_query.append(f["name"] + f["op"] + val)
             # We accepted the filter, update the already
             # processed list.
-            already_processed = new_already_processed
+            already_processed.append(f["name_"])
+            already_processed.append(f["op_"])
+            already_processed.append(f["val_"])
             processed = True
         except KeyError:
             pass
