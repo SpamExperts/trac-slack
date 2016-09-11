@@ -82,10 +82,10 @@ mes = {
     "me", "my", "i",
 }
 start_date = {
-    "from",
+    "from", "since", "after",
 }
 end_date = {
-    "to",
+    "to", "before",
 }
 
 match_re = re.compile(r"""
@@ -188,7 +188,7 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
     # filter. By default the filter is not negated.
     if curr_filter is None:
         curr_filter = {"not": False, "list": False, "status_tokens": set(),
-                       "extra_tokens": set()}
+                       "extra_tokens": []}
 
     full = "name" in curr_filter and "op" in curr_filter and "val" in curr_filter
     processed = True
@@ -281,7 +281,7 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
     elif token.orth_ in end_date and level == 0:
         curr_filter["name"] = "to"
     else:
-        curr_filter["extra_tokens"].add(token)
+        curr_filter["extra_tokens"].append(token)
         processed = False
 
     if token.orth_ in TRANSLATE_STATUS_TOKENS:
@@ -301,13 +301,22 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
     return curr_filter
 
 
-def parse_date(tokens):
+def parse_date(tokens, already_processed):
     # Try to order the tokens
     stokens = []
+    rtokens = []
     number = None
     dtype = None
     for i in tokens:
+        if i.pos_ == "CONJ":
+            # We are heading into a different command
+            # or filter, stop.
+            break
+        if i.pos_ == "DET":
+            continue
         stokens.append(i.orth_)
+        rtokens.append(i)
+
         try:
             number = int(i.orth_)
             continue
@@ -316,11 +325,20 @@ def parse_date(tokens):
         if i.orth_ == "ago":
             continue
         dtype = i.orth_
+
+    logger.debug("Trying to extract date from: %s %s", number, dtype)
     result = dateparser.parse("%s %s ago" % (number, dtype))
     if result is not None:
+        logger.debug("Extracted date %s from %s", result, stokens)
+        already_processed.extend(rtokens)
         return result
 
-    return dateparser.parse(" ".join(stokens))
+    logger.debug("Trying to extract date from: %s", stokens)
+    result = dateparser.parse(" ".join(stokens))
+    if result is not None:
+        logger.debug("Extracted date %s from %s", result, stokens)
+        already_processed.extend(rtokens)
+        return result
 
 
 def natural_to_query(query, user):
@@ -398,9 +416,9 @@ def natural_to_query(query, user):
         try:
             assert f["name"] == "from"
             assert start_time is None
-            start_time = parse_date(f["extra_tokens"])
+            start_time = parse_date(f["extra_tokens"], already_processed)
             assert start_time is not None
-            already_processed.extend(f["extra_tokens"])
+            already_processed = new_already_processed
             continue
         except (KeyError, AssertionError):
             pass
@@ -408,9 +426,9 @@ def natural_to_query(query, user):
         try:
             assert f["name"] == "to"
             assert end_time is None
-            end_time = parse_date(f["extra_tokens"])
+            end_time = parse_date(f["extra_tokens"], already_processed)
             assert end_time is not None
-            already_processed.extend(f["extra_tokens"])
+            already_processed = new_already_processed
             continue
         except (KeyError, AssertionError):
             pass

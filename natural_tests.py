@@ -103,6 +103,12 @@ CASES = {
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
     "show my new features from 2 weeks ago":
         u"status=new&type=feature&owner=alex&time=%s..%s" % (two_week, today),
+    "bug tickets since July 24th":
+        u"type=bug&time=2016-07-24..%s" % today,
+    "tickets since 2016/07/04 and before the 24th of August":
+        u"time=2016-07-04..2016-08-24",
+    "bug tickets after the 26th of july but before the 27th of August":
+        u"type=bug&time=2016-07-26..2016-08-27",
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",
