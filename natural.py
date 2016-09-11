@@ -32,6 +32,7 @@ negated_partials = {
 }
 exacts = {
     "is", "exactly", "exact", "equals", "same", "identical", "specific",
+    "'ve", "have",
 }
 negated_exacts = {
     "isnot",
@@ -478,7 +479,7 @@ def natural_to_query(query, user):
                 pass
 
         # Not always right, but good enough.
-        if token.lower_ in mes and not processed:
+        if token.lower_ == "my" and not processed:
             if is_negated(token):
                 trac_query.append("owner=!" + user)
             else:
