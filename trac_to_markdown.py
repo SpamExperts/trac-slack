@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Convert Trac's WikiFormat text to Markdown."""
 
 import re
@@ -17,7 +18,7 @@ FLAVOURS = {
     "mrkdwn": {
         "bold": r"*\1*",
         "italic": r"_\1_",
-        "ul": r"\u2022\2",
+        "ul": u"•\\2",
         "ol": r"\1\2",
         "wiki_link": r"<%s/wiki/\1|\2>",
         "ticket_link": r"<%s/ticket/\1|\2>",
