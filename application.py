@@ -1,3 +1,6 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """"""
 
 import os
@@ -107,8 +110,8 @@ else:
     )
 
 
-QUERY_TEMPLATE = (" * <https://%(host)s/ticket/%(number)s|#%(number)s> "
-                  "- %(summary)s")
+QUERY_TEMPLATE = (u" • <https://%(host)s/ticket/%(number)s|#%(number)s> "
+                  u"- %(summary)s")
 
 
 class QueryTrac(flask.views.MethodView):
@@ -139,7 +142,7 @@ class QueryTrac(flask.views.MethodView):
         try:
             tickets = trac_proxy.ticket.query(query)
         except Exception:
-            return {"text": ("Oops, something went wrong!\n"
+            return {"text": ("Oops, something went wrong! :sweat:\n"
                              "The query might not be valid?")}
         total_tickets = len(tickets)
         for ticket in tickets[:limit]:
@@ -245,8 +248,8 @@ class QueryTrac(flask.views.MethodView):
             if not query:
                 # Might be nice to have random responses.
                 return {
-                    "text": ("Didn't quite get that :(\n"
-                             "Try quoting your text searches.")}
+                    "text": ("Didn't quite got that :thinking_face: \n"
+                             "HAve you tried quoting your text searches?")}
             return self._handle_query(query)
 
         if command == "query":
