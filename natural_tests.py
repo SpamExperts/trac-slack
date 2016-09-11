@@ -103,20 +103,37 @@ CASES = {
         u"description=!~this is a test",
     "show closed bugs from one week ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
+    "show closed bugs changed since one week ago to yesterday":
+        u"status=closed&type=bug&changetime=%s..%s" % (one_week, yesterday),
     "show closed bugs from 1 weeks ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
+    "show closed modified bugs from 1 weeks ago to yesterday":
+        u"status=closed&type=bug&changetime=%s..%s" % (one_week, yesterday),
     "show my new features from 2 weeks ago":
         u"status=new&type=feature&owner=alex&time=%s..%s" % (two_week, today),
+    "show my new features changed since 2 weeks ago":
+        u"status=new&type=feature&owner=alex&changetime=%s..%s" % (two_week,
+                                                                   today),
     "my bug tickets since 2016-01-01":
         u"type=bug&owner=alex&time=2016-01-01..%s" % today,
+    "my bug tickets modified since 2016-01-01":
+        u"type=bug&owner=alex&changetime=2016-01-01..%s" % today,
     "feature tickets I've reported from last week":
         u"reporter=alex&type=feature&time=%s..%s" % (one_week, today),
+    "feature tickets I've reported changed last week":
+        u"reporter=alex&type=feature&changetime=%s..%s" % (one_week, today),
     "bug tickets since July 24th":
         u"type=bug&time=2016-07-24..%s" % today,
+    "bug tickets changed since July 24th":
+        u"type=bug&changetime=2016-07-24..%s" % today,
     "tickets since 2016/07/04 and before the 24th of August":
         u"time=2016-07-04..2016-08-24",
+    "tickets changed after 2016/07/04 and before the 24th of August":
+        u"changetime=2016-07-04..2016-08-24",
     "bug tickets after the 26th of july but before the 27th of August":
         u"type=bug&time=2016-07-26..2016-08-27",
+    "bug tickets changed after the 26th of july but before the 27th of August":
+        u"type=bug&changetime=2016-07-26..2016-08-27",
     "show tickets I've reported":
         u"reporter=alex",
     "show last headbang tickets":

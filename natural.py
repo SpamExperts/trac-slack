@@ -56,6 +56,12 @@ endings = {
 mes = {
     "me", "my", "i", "tome",
 }
+change_modifiers = {
+    "changed", "change", "modified",
+}
+on_date = {
+    "on",
+}
 start_date = {
     "from", "since", "after",
 }
@@ -330,6 +336,8 @@ def get_filter(token, texts, user, already_processed, curr_filter=None,
         # this is likely the value.
         # XXX Risky assumption.
         curr_filter["val"] = token.orth_
+    elif token.orth_ in on_date and level == 0:
+        curr_filter["name"] = "on"
     elif token.orth_ in start_date and level == 0:
         curr_filter["name"] = "from"
     elif token.orth_ in end_date and level == 0:
@@ -359,8 +367,10 @@ def parse_date(tokens, already_processed):
     # Try to order the tokens
     stokens = []
     rtokens = []
+    ago_tokens = []
     number = None
     dtype = None
+    ago = False
     for i in tokens:
         if i.pos_ == "CONJ":
             # We are heading into a different command
@@ -368,25 +378,37 @@ def parse_date(tokens, already_processed):
             break
         if i.pos_ == "DET":
             continue
-        value = NUMBERS.get(i.lower_, i.lower_)
+        value = str(NUMBERS.get(i.lower_, i.lower_))
         stokens.append(value)
         rtokens.append(i)
 
-        try:
-            number = int(value)
+        if number is None:
+            try:
+                number = str(int(value))
+                ago_tokens.append(i)
+                continue
+            except (TypeError, ValueError):
+                pass
+        if i.orth_ == "ago" and not ago:
+            ago = True
+            ago_tokens.append(i)
             continue
-        except (TypeError, ValueError):
-            pass
-        if i.orth_ == "ago":
-            continue
-        dtype = i.orth_
+        if dtype is None:
+            ago_tokens.append(i)
+            dtype = i.orth_
 
-    logger.debug("Trying to extract date from: %s %s", number, dtype)
-    result = dateparser.parse("%s %s ago" % (number, dtype))
-    if result is not None:
-        logger.debug("Extracted date %s from %s", result, stokens)
-        already_processed.extend(rtokens)
-        return result
+    if ago:
+        logger.debug("Trying to extract date from: %s %s", number, dtype)
+        result = dateparser.parse("%s %s ago" % (number, dtype))
+        if result is not None:
+            logger.debug("Extracted date %s from %s", result, stokens)
+            already_processed.extend(ago_tokens)
+            return result
+
+    if len(stokens) == 1 and number is not None:
+        # We cannot deduce the date from a single number
+        # but dateparser thinks he can.
+        return
 
     logger.debug("Trying to extract date from: %s", stokens)
     result = dateparser.parse(" ".join(stokens))
@@ -463,10 +485,16 @@ def natural_to_query(query, user):
     tokens = nlp(query.decode("utf8"))
     start_time = None
     end_time = None
+    changed = False
     for token in tokens:
         logger.debug("Checking token: %s", token)
         if token in already_processed:
             logger.debug("Already processed: %s", token)
+            continue
+
+        if token.lower_ in change_modifiers:
+            changed = True
+            already_processed.append(token)
             continue
 
         if token.orth_ in FIXED_QUERIES_REVERSED:
@@ -497,20 +525,18 @@ def natural_to_query(query, user):
         logger.debug("Resulting filter: %s", f)
 
         try:
-            assert f["name"] == "from"
-            assert start_time is None
-            start_time = parse_date(f["extra_tokens"], already_processed)
-            assert start_time is not None
-            already_processed = new_already_processed
-            continue
-        except (KeyError, AssertionError):
-            pass
-
-        try:
-            assert f["name"] == "to"
-            assert end_time is None
-            end_time = parse_date(f["extra_tokens"], already_processed)
-            assert end_time is not None
+            possible_time = parse_date(f["extra_tokens"], new_already_processed)
+            assert possible_time is not None
+            if (start_time is None and end_time is None and
+                    f.get("name", "") == "on"):
+                start_time, end_time = possible_time, possible_time
+            elif start_time is None and ("name" not in f or
+                                       f["name"] == "from"):
+                start_time = possible_time
+            elif f.get("name", "") == "to" and end_time is None:
+                end_time = possible_time
+            else:
+                raise AssertionError()
             already_processed = new_already_processed
             continue
         except (KeyError, AssertionError):
@@ -555,10 +581,17 @@ def natural_to_query(query, user):
             else:
                 trac_query.append("owner=" + user)
 
+    # We could theoretically have both more than two dates.
+    # For example trying to filter both by change time and
+    # opening time. But that's getting too complex for now.
     if start_time is not None or end_time is not None:
         end_time = end_time or datetime.datetime.utcnow()
         start_time = start_time or datetime.datetime.utcnow()
-        trac_query.append("time=%s..%s" % (
+        filter_value = "time"
+        if changed:
+            filter_value = "changetime"
+        trac_query.append("%s=%s..%s" % (
+            filter_value,
             start_time.strftime("%Y-%m-%d"),
             end_time.strftime("%Y-%m-%d"),
         ))
