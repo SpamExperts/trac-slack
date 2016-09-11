@@ -362,7 +362,7 @@ def parse_date(tokens, already_processed):
 
 def natural_to_query(query, user):
     trac_query = []
-    logger.info("Processing query: %r", query)
+    logger.info("Processing natural query: %r", query)
 
     # Replace quoted string with unique ids, as the
     # user clearly wants us to interpret them as

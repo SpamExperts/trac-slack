@@ -38,15 +38,13 @@ application = flask.Flask(__name__)
 mimerender = FlaskMimeRender()(default='json', json=jsonify)
 
 
-def setup_logging():
+def setup_logging(logger):
     user = CONF.get("logging", "user")
     filename = CONF.get("logging", "file")
     sentry = CONF.get("logging", "sentry")
     level = getattr(logging, CONF.get("logging", "level").upper())
     if user and pwd.getpwuid(os.getuid()).pw_name != user:
         return
-
-    logger = application.logger
 
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
     logger.setLevel(logging.DEBUG)
@@ -77,7 +75,8 @@ def setup_logging():
             null_logger.handlers = [logging.NullHandler()]
 
 
-setup_logging()
+setup_logging(application.logger)
+setup_logging(natural.logger)
 
 
 def verify_token():
