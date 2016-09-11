@@ -92,6 +92,19 @@ match_re = re.compile(r"""
     (?<=\s)(('.*?')|(".*?")) |
     ^(('.*?')|(".*?"))
 """, re.X)
+date_re = re.compile(r"""
+(
+    (?:\s|^)
+    (?:\d{4})|(?:\d{2})   # Group 1 (2 or 4 digits)
+)
+-
+(\d{2})                   # Group 2 (2 digits)
+-
+(
+    (?:\d{4})|(?:\d{2})   # Group 3 (2 or 4 digits)
+    (:?\s|$)
+)
+""", re.X | re.M)
 
 
 def _is_something(tok, checks=None):
@@ -362,6 +375,8 @@ def natural_to_query(query, user):
     query = query.lower()
     logger.debug("Found text search: %s", texts)
     logger.debug("Query: %s", query)
+    query = date_re.sub(r" \1/\2/\3 ", query)
+    logger.debug("Replace dates: %s", query)
     # Replace any fixed keywords provided in the
     # config file.
     for i, j in FIXED_QUERIES.items():
