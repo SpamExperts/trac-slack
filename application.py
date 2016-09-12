@@ -150,6 +150,11 @@ class QueryTrac(flask.views.MethodView):
         attributes["summary"] = escape(attributes["summary"])
         attributes["description"] = escape(to_md(attributes["description"]))
         attributes["keywords"] = escape(attributes["keywords"])
+        if attributes["status"] == "closed":
+            attributes["status+"] = "%s: %s" % (attributes["status"],
+                                                attributes["resolution"])
+        else:
+            attributes["status+"] = attributes["status"]
         return attributes
 
     def _handle_query(self, query):

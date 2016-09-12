@@ -19,7 +19,7 @@ def load_configuration():
             "extra_fields": "",
             "statuses": "",
             "resolutions": "fixed,invalid,wontfix,duplicate,worksforme,cantfix",
-            "describe_fields": "type,component,priority,status,milestone",
+            "describe_fields": "type,component,priority,status+,milestone",
         },
         "fixed_queries": {},
         "slack": {
