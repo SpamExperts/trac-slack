@@ -589,19 +589,19 @@ def natural_to_query(query, user):
             else:
                 trac_query.append("owner=" + user)
 
-    # We could theoretically have both more than two dates.
+    # We could theoretically have more than two dates.
     # For example trying to filter both by change time and
     # opening time. But that's getting too complex for now.
     if start_time is not None or end_time is not None:
-        end_time = end_time or datetime.datetime.utcnow()
-        start_time = start_time or datetime.datetime.utcnow()
+        end_time = "" if end_time is None else end_time.strftime("%Y-%m-%d")
+        start_time = "" if start_time is None else start_time.strftime("%Y-%m-%d")
         filter_value = "time"
         if changed:
             filter_value = "changetime"
         trac_query.append("%s=%s..%s" % (
             filter_value,
-            start_time.strftime("%Y-%m-%d"),
-            end_time.strftime("%Y-%m-%d"),
+            start_time,
+            end_time,
         ))
 
     logger.info("Created query: %s", trac_query)

@@ -136,22 +136,22 @@ CASES = {
     "closed modified bugs from 1 weeks ago to yesterday":
         u"status=closed&type=bug&changetime=%s..%s" % (one_week, yesterday),
     "my new features from 2 weeks ago":
-        u"status=new&type=feature&owner=alex&time=%s..%s" % (two_week, today),
+        u"status=new&type=feature&owner=alex&time=%s..%s" % (two_week, ""),
     "my new features changed since 2 weeks ago":
         u"status=new&type=feature&owner=alex&changetime=%s..%s" % (two_week,
-                                                                   today),
+                                                                   ""),
     "my bug tickets since 2016-01-01":
-        u"type=bug&owner=alex&time=2016-01-01..%s" % today,
+        u"type=bug&owner=alex&time=2016-01-01..%s" % "",
     "my bug tickets modified since 2016-01-01":
-        u"type=bug&owner=alex&changetime=2016-01-01..%s" % today,
+        u"type=bug&owner=alex&changetime=2016-01-01..%s" % "",
     "feature tickets I've reported from last week":
-        u"reporter=alex&type=feature&time=%s..%s" % (one_week, today),
+        u"reporter=alex&type=feature&time=%s..%s" % (one_week, ""),
     "feature tickets I've reported changed last week":
-        u"reporter=alex&type=feature&changetime=%s..%s" % (one_week, today),
+        u"reporter=alex&type=feature&changetime=%s..%s" % (one_week, ""),
     "bug tickets since July 24th":
-        u"type=bug&time=2016-07-24..%s" % today,
+        u"type=bug&time=2016-07-24..%s" % "",
     "bug tickets changed since July 24th":
-        u"type=bug&changetime=2016-07-24..%s" % today,
+        u"type=bug&changetime=2016-07-24..%s" % "",
     "tickets since 2016/07/04 and before the 24th of August":
         u"time=2016-07-04..2016-08-24",
     "tickets changed after 2016/07/04 and before the 24th of August":
@@ -161,9 +161,9 @@ CASES = {
     "bug tickets changed after the 26th of july but before the 27th of August":
         u"type=bug&changetime=2016-07-26..2016-08-27",
     "task tickets opened in the last two weeks":
-        u"type=task&time=%s..%s" % (two_week, today),
+        u"type=task&time=%s..%s" % (two_week, ""),
     "normal feature tickets changed in the last two weeks":
-        u"type=feature&priority=normal&changetime=%s..%s" % (two_week, today),
+        u"type=feature&priority=normal&changetime=%s..%s" % (two_week, ""),
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",
