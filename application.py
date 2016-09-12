@@ -196,11 +196,10 @@ class QueryTrac(flask.views.MethodView):
         fields = [
             {
                 "title": field.title(),
-                "value": attr[field],
+                "value": attr.get(field, "_(unknown)_"),
                 "short": True,
             }
-            for field in ("type", "component", "priority", "status",
-                          "milestone")
+            for field in CONF.get("trac", "describe_fields").split(",")
             if attr[field]
             ]
         return {
