@@ -175,6 +175,8 @@ CASES = {
         u"status=assigned_feature&type=feature",
     "invalid bug tickets":
         u"type=bug&resolution=invalid",
+    "show opened and closed bugs":
+        u"type=bug",
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",

@@ -93,6 +93,8 @@ REPL = {
     "not like": "notlike",
     "is not in": "isnotin",
     "to me": "tome",
+    "open and closed": "all",
+    "opened and closed": "all",
 }
 
 
