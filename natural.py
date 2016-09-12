@@ -492,11 +492,17 @@ def natural_to_query(query, user):
     start_time = None
     end_time = None
     changed = False
+    status_provided = False
+    all_provided = False
+    resolution_provided = False
     for token in tokens:
         logger.debug("Checking token: %s", token)
         if token in already_processed:
             logger.debug("Already processed: %s", token)
             continue
+
+        if token.lower_ in "all":
+            all_provided = True
 
         if token.lower_ in change_modifiers:
             changed = True
@@ -565,7 +571,10 @@ def natural_to_query(query, user):
             processed = True
         except KeyError:
             pass
-
+        if processed and f["name"] == "status":
+            status_provided = True
+        elif processed and f["name"] == "resolution":
+            resolution_provided = True
         # Check if any of the gathered status tokens match
         # the known ones, and add a status filer.
         if f.get("name", "") != "status" or not processed:
@@ -578,6 +587,7 @@ def natural_to_query(query, user):
                 else:
                     trac_query.append("status=" + status)
                 already_processed.extend(f["status_tokens"])
+                status_provided = True
                 processed = True
             except KeyError:
                 pass
@@ -603,6 +613,9 @@ def natural_to_query(query, user):
             start_time,
             end_time,
         ))
+
+    if not status_provided and not all_provided and not resolution_provided:
+        trac_query.append("status=!closed")
 
     logger.info("Created query: %s", trac_query)
     return "&".join(trac_query)

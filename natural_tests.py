@@ -66,13 +66,13 @@ def create_test(language, expected):
 CASES = {
     # Simple "MY tickets"
     "my tickets":
-        u"owner=alex",
+        u"owner=alex&status=!closed",
     "my bug tickets":
-        u"owner=alex&type=bug",
+        u"owner=alex&type=bug&status=!closed",
     "my not closed tickets":
         u"owner=alex&status=!closed",
     "bugs assigned to me":
-        u"type=bug&owner=alex",
+        u"type=bug&owner=alex&status=!closed",
     # Check resolution
     "fixed bugs tickets":
         u"type=bug&resolution=fixed",
@@ -81,24 +81,24 @@ CASES = {
         u"component=Internal Systems&type=bug&status=!closed",
     # Stars/ends with filters
     "summary starts with tests, owner is alex":
-        u"summary=^tests&owner=alex",
+        u"summary=^tests&owner=alex&status=!closed",
     "my assigned features where summary ends with tests":
         u"summary=$tests&owner=alex&status=assigned_feature&type=feature",
     # Higher or normal modifiers
     "my tickets normal or higher":
-        u"priority=normal&priority=high&priority=highest&owner=alex",
+        u"priority=normal&priority=high&priority=highest&owner=alex&status=!closed",
     "my tickets normal or lower":
-        u"priority=lowest&priority=low&priority=normal&owner=alex",
+        u"priority=lowest&priority=low&priority=normal&owner=alex&status=!closed",
     # Check I'm in partial filter
     "tickets where I'm in cc":
-        u"cc=~alex",
+        u"cc=~alex&status=!closed",
     "tickets where I'm not in cc":
-        u"cc=!~alex",
+        u"cc=!~alex&status=!closed",
     "not closed tickets where I'm in cc":
         u"status=!closed&cc=~alex",
     # Check I have
     "tickets I've reported":
-        u"reporter=alex",
+        u"reporter=alex&status=!closed",
     # Check complex status build up
     "my pyzor assigned trunk features":
         u"owner=alex&status=assigned_trunk_feature&type=feature&component"
@@ -116,16 +116,16 @@ CASES = {
         u"status=!closed&status=!merge_required",
     # Check custom fixed queries specified in the config
     "my moshpit":
-        u"keywords=moshpit&status=!closed&summary=~metal&owner=alex",
+        u"keywords=moshpit&status=!closed&summary=~metal&owner=alex&status=!closed",
     "not my moshpit":
-        u"keywords=!moshpit&status=closed&summary=!~metal&owner=alex",
+        u"keywords=!moshpit&status=closed&summary=!~metal&owner=alex&status=!closed",
     "last headbang tickets":
-        u"reporter=alex&milestone=%s" % now.strftime("%B %Y"),
+        u"reporter=alex&milestone=%s&status=!closed" % now.strftime("%B %Y"),
     # Check quoting the values
     "description like 'this is a test'":
-        u"description=~this is a test",
+        u"description=~this is a test&status=!closed",
     "description doesn't contain 'this is a test'":
-        u"description=!~this is a test",
+        u"description=!~this is a test&status=!closed",
     # Time and changetime tests
     "closed bugs from one week ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
@@ -141,29 +141,40 @@ CASES = {
         u"status=new&type=feature&owner=alex&changetime=%s..%s" % (two_week,
                                                                    ""),
     "my bug tickets since 2016-01-01":
-        u"type=bug&owner=alex&time=2016-01-01..%s" % "",
+        u"type=bug&owner=alex&time=2016-01-01..%s&status=!closed" % "",
     "my bug tickets modified since 2016-01-01":
-        u"type=bug&owner=alex&changetime=2016-01-01..%s" % "",
+        u"type=bug&owner=alex&changetime=2016-01-01..%s&status=!closed" % "",
     "feature tickets I've reported from last week":
-        u"reporter=alex&type=feature&time=%s..%s" % (one_week, ""),
+        u"reporter=alex&type=feature&time=%s..%s&status=!closed" % (one_week, ""),
     "feature tickets I've reported changed last week":
-        u"reporter=alex&type=feature&changetime=%s..%s" % (one_week, ""),
+        u"reporter=alex&type=feature&changetime=%s..%s&status=!closed" % (one_week, ""),
     "bug tickets since July 24th":
-        u"type=bug&time=2016-07-24..%s" % "",
+        u"type=bug&time=2016-07-24..%s&status=!closed" % "",
     "bug tickets changed since July 24th":
-        u"type=bug&changetime=2016-07-24..%s" % "",
+        u"type=bug&changetime=2016-07-24..%s&status=!closed" % "",
     "tickets since 2016/07/04 and before the 24th of August":
-        u"time=2016-07-04..2016-08-24",
+        u"time=2016-07-04..2016-08-24&status=!closed",
     "tickets changed after 2016/07/04 and before the 24th of August":
-        u"changetime=2016-07-04..2016-08-24",
+        u"changetime=2016-07-04..2016-08-24&status=!closed",
     "bug tickets after the 26th of july but before the 27th of August":
-        u"type=bug&time=2016-07-26..2016-08-27",
+        u"type=bug&time=2016-07-26..2016-08-27&status=!closed",
     "bug tickets changed after the 26th of july but before the 27th of August":
-        u"type=bug&changetime=2016-07-26..2016-08-27",
+        u"type=bug&changetime=2016-07-26..2016-08-27&status=!closed",
     "task tickets opened in the last two weeks":
-        u"type=task&time=%s..%s" % (two_week, ""),
+        u"type=task&time=%s..%s&status=!closed" % (two_week, ""),
     "normal feature tickets changed in the last two weeks":
-        u"type=feature&priority=normal&changetime=%s..%s" % (two_week, ""),
+        u"type=feature&priority=normal&changetime=%s..%s&status=!closed" % (two_week, ""),
+    # Check default status
+    "bug tickets":
+        u"status=!closed&type=bug",
+    "all bug tickets":
+        u"type=bug",
+    "assigned features":
+        u"status=assigned_feature&type=feature",
+    "all assigned features":
+        u"status=assigned_feature&type=feature",
+    "invalid bug tickets":
+        u"type=bug&resolution=invalid",
     # Failing:
     # u"not update_documentation":
     #     u"status=!update_documentation",
