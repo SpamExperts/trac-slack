@@ -195,34 +195,14 @@ class QueryTrac(flask.views.MethodView):
             color = "danger"
         fields = [
             {
-                "title": "Type",
-                "value": attr["type"],
-                "short": True
-            },
-            {
-                "title": "Component",
-                "value": attr["component"],
-                "short": True
-            },
-            {
-                "title": "Priority",
-                "value": attr["priority"],
-                "short": True
-            },
-            {
-                "title": "Status",
-                "value": attr["status"],
-                "short": True
-            },
-        ]
-        if attr["milestone"]:
-            fields.append(
-                {
-                    "title": "Milestone",
-                    "value": attr["milestone"],
-                    "short": True
-                }
-            )
+                "title": field.title(),
+                "value": attr[field],
+                "short": True,
+            }
+            for field in ("type", "component", "priority", "status",
+                          "milestone")
+            if attr[field]
+            ]
         return {
             "response_type": "in_channel",
             "attachments": [
