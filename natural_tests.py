@@ -127,6 +127,8 @@ CASES = {
     "description doesn't contain 'this is a test'":
         u"description=!~this is a test&status=!closed",
     # Time and changetime tests
+    "bugs from the past week":
+        u"type=bug&time=%s..%s&status=!closed" % (one_week, ""),
     "closed bugs from one week ago to yesterday":
         u"status=closed&type=bug&time=%s..%s" % (one_week, yesterday),
     "closed bugs changed since one week ago to yesterday":

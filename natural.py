@@ -397,7 +397,7 @@ def parse_date(tokens, already_processed):
                 continue
             except (TypeError, ValueError):
                 pass
-        if i.orth_ in ("ago", "last") and not ago:
+        if i.orth_ in ("ago", "last", "past") and not ago:
             ago = True
             ago_tokens.append(i)
             continue
@@ -406,6 +406,8 @@ def parse_date(tokens, already_processed):
             dtype = i.orth_
 
     if ago:
+        if number is None:
+            number = "1"
         logger.debug("Trying to extract date from: %s %s", number, dtype)
         result = dateparser.parse("%s %s ago" % (number, dtype))
         if result is not None:
