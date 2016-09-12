@@ -193,6 +193,36 @@ class QueryTrac(flask.views.MethodView):
             color = "warning"
         elif attr["type"] == "bug":
             color = "danger"
+        fields = [
+            {
+                "title": "Type",
+                "value": attr["type"],
+                "short": True
+            },
+            {
+                "title": "Component",
+                "value": attr["component"],
+                "short": True
+            },
+            {
+                "title": "Priority",
+                "value": attr["priority"],
+                "short": True
+            },
+            {
+                "title": "Status",
+                "value": attr["status"],
+                "short": True
+            },
+        ]
+        if attr["milestone"]:
+            fields.append(
+                {
+                    "title": "Milestone",
+                    "value": attr["milestone"],
+                    "short": True
+                }
+            )
         return {
             "response_type": "in_channel",
             "attachments": [
@@ -203,33 +233,7 @@ class QueryTrac(flask.views.MethodView):
                     "author_name": attr["owner"],
                     "title_link": "https://%(host)s/ticket/%(number)s" % attr,
                     "text": self._to_md(attr["description"]),
-                    "fields": [
-                        {
-                            "title": "Type",
-                            "value": attr["type"],
-                            "short": True
-                        },
-                        {
-                            "title": "Component",
-                            "value": attr["component"],
-                            "short": True
-                        },
-                        {
-                            "title": "Priority",
-                            "value": attr["priority"],
-                            "short": True
-                        },
-                        {
-                            "title": "Status",
-                            "value": attr["status"],
-                            "short": True
-                        },
-                        {
-                            "title": "Milestone",
-                            "value": attr["milestone"],
-                            "short": True
-                        },
-                    ],
+                    "fields": fields,
                     "footer": "#%(number)s" % attr,
                     "ts": attr["stamp"],
                     "mrkdwn_in": ["text"],
