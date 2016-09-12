@@ -10,6 +10,7 @@ FLAVOURS = {
         "italic": r"*\1*",
         "ul": r"*\2",
         "ol": r"\1.\2",
+        "link": r"[[\2|\1]]",
         "wiki_link": r"[%s/wiki/\2](\1)",
         "ticket_link": r"[%s/ticket/\2](\1)",
         "changeset_link": r"[%s/changeset/\2](\1)",
@@ -20,6 +21,7 @@ FLAVOURS = {
         "italic": r"_\1_",
         "ul": u"\\1•\\2",
         "ol": r"\1\2",
+        "link": r"<\1|\2>",
         "wiki_link": r"<%s/wiki/\1|\2>",
         "ticket_link": r"<%s/ticket/\1|\2>",
         "changeset_link": r"<%s/changeset/\1|\2>",
@@ -77,7 +79,7 @@ def convert(text, base="", flavour="markdown"):
                   transforms["ticket_link"] % base, text)
     text = re.sub(r"\[(?:changeset:)([^\s]+)\s(.+)\]",
                   transforms["changeset_link"] % base, text)
-    text = re.sub(r"\[([^\s]+)\s(.+)\]", r"[[\2|\1]]", text)
+    text = re.sub(r"\[([^\s]+)\s(.+)\]", transforms["link"], text)
     # TODO: automatic CamelCase links (which are terrible anyway).
     # These links show the URL so do not need custom transforms.
     text = re.sub(r'(\s)wiki:([A-Za-z0-9]+)(\s)',
