@@ -71,9 +71,9 @@ def convert(text, base="", flavour="markdown"):
     text = re.sub(r"=\s+(.+?)\s+=", r"# \1", text)
 
     # Convert lists.
-    text = re.sub(r"(^\s+)\*(\s)", transforms["ul"], text, flags=re.MULTILINE)
-    text = re.sub(r"(^\s+)\-(\s)", transforms["ul"], text, flags=re.MULTILINE)
-    text = re.sub(r"^(\s+\d+)\.(\s)", transforms["ol"], text,
+    text = re.sub(r"(^\s*)\*(\s)", transforms["ul"], text, flags=re.MULTILINE)
+    text = re.sub(r"(^\s*)\-(\s)", transforms["ul"], text, flags=re.MULTILINE)
+    text = re.sub(r"^(\s*\d+)\.(\s)", transforms["ol"], text,
                   flags=re.MULTILINE)
 
     # Convert links.
@@ -97,7 +97,8 @@ def convert(text, base="", flavour="markdown"):
     # r1234 and [124] to changesets.
     # XXX Maybe git changeset markers have more than 0-9? Hex?
     text = re.sub(r"(\s)r(\d+)\b", transforms["auto_changeset"] % base, text)
-    text = re.sub(r"(\s)\[(\d+)\]\b", transforms["auto_changeset"] % base, text)
+    text = re.sub(r"(\s)\[(\d+)\]\b", transforms["auto_changeset"] % base,
+                  text)
     text = re.sub(r"(\s)changeset:([0-9]+)(\s)",
                   r"\1%s/changeset/\2\3" % base, text)
     return text
