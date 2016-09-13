@@ -407,6 +407,7 @@ def parse_date(tokens, already_processed):
 
     if ago:
         if number is None:
+            # Also known as William Riker
             number = "1"
         logger.debug("Trying to extract date from: %s %s", number, dtype)
         result = dateparser.parse("%s %s ago" % (number, dtype))
