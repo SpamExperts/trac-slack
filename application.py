@@ -10,6 +10,11 @@ import calendar
 import functools
 
 try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+
+try:
     from xmlrpc import client
 except ImportError:
     import xmlrpclib as client
@@ -228,6 +233,61 @@ class QueryTrac(flask.views.MethodView):
     def handle_help(self):
         return {"text": HELP_TEXT}
 
+    def handle_adjust(self, user, query):
+        possible_fields = CONF.get("trac", "adjust_fields")
+        if not possible_fields:
+            return {"text": "Sorry, I'm not set up for this yet."}
+        possible_fields = possible_fields.split(",")
+        ticket_id, field, value, details = query.split(None, 3)
+        if field not in possible_fields:
+            if len(possible_fields) == 1:
+                possible = possible_fields[0]
+            elif len(possible_fields) == 2:
+                possible = " or ".join(possible_fields)
+            else:
+                possible = ", ".join(possible_fields[:-1])
+                possible = "%s, or %s" % (possible, possible_fields[-1])
+            return {"text":
+                    "Sorry, I don't know how to do that yet. Try %s." %
+                    possible}
+        try:
+            value = float(value)
+        except ValueError:
+            # We probably could figure out an appropriate way to handle
+            # non-numeric fields.
+            return {"text": "Sorry, I can only increase numeric fields."}
+        try:
+            ticket_id = int(ticket_id.lstrip("#"))
+        except ValueError:
+            example_details = CONF.get("trac", "example_adjust_details")
+            return {
+                "text": "Sorry, I didn't understand that. I'm expecting "
+                "`adjust [ticket id] [field] [value] [details]`, like "
+                "`adjust #12345 %s 5 %s`" %
+                (possible_fields[0], example_details)}
+        try:
+            template = CONF.get("trac", "adjust_template_%s" % field)
+        except configparser.NoOptionError:
+            pass
+        else:
+            details = template % {"details": details, "value": value}
+        attributes = dict(trac_proxy.ticket.get(ticket)[3])
+        if attributes[field]:
+            try:
+                new_value = float(attributes[field]) + value
+            except ValueError:
+                return {"text": "Sorry, %s's %s is not a number." %
+                        (ticket_id, field)}
+        else:
+            new_value = value
+        changes = {
+            "description": "%s\n%s" % (attributes["description"], details),
+            field: str(new_value),
+        }
+        trac_proxy.ticket.update(ticket_id, "", changes, True, user)
+        return {"text": "Done! New %s for #%s is %s" %
+                (field, ticket_id, new_value)}
+
     @mimerender
     def post(self):
         text = flask.request.form["text"]
@@ -236,7 +296,7 @@ class QueryTrac(flask.views.MethodView):
             return self.handle_help()
         try:
             command, query = text.split(None, 1)
-            assert command.lower() in ("describe", "show", "query")
+            assert command.lower() in ("describe", "show", "query", "adjust")
         except (ValueError, AssertionError):
             # Try to figure out what the user wants
             try:
@@ -251,6 +311,9 @@ class QueryTrac(flask.views.MethodView):
         command = command.lower()
         if command == "describe":
             return self._handle_describe("id=%s" % query)
+
+        if command == "adjust":
+            return self.handle_adjust(user, query)
 
         if command == "show":
             query = natural.natural_to_query(query, user)
@@ -271,6 +334,7 @@ application.add_url_rule(
     CONF.get("slack", "endpoint"),
     view_func=QueryTrac.as_view('trac_query')
 )
+
 
 # Testing code.
 if __name__ == "__main__":
