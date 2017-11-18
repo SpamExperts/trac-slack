@@ -278,7 +278,7 @@ class QueryTrac(flask.views.MethodView):
             pass
         else:
             details = template % {"details": details, "value": value}
-        attributes = dict(trac_proxy.ticket.get(ticket)[3])
+        attributes = dict(trac_proxy.ticket.get(ticket_id)[3])
         if attributes[field]:
             try:
                 new_value = float(attributes[field]) + value
