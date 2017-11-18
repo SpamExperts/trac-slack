@@ -353,7 +353,7 @@ def slack_action():
         field, tickets = callback_id.split("_")[1:]
         tickets = tickets.split(",")
         if len(tickets) == 1:
-            ticket_desc = "#" % tickets[0]
+            ticket_desc = "#%s" % tickets[0]
         else:
             ticket_desc = ("tickets %s" %
                            ", ".join(["#%s" % ticket for ticket in tickets]))
