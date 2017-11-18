@@ -8,6 +8,7 @@ import pwd
 import json
 import logging
 import calendar
+import urlparse
 import functools
 
 try:
@@ -138,6 +139,47 @@ HELP_TEXT = INTRO + BODY_TEXT
 QUERY_TEMPLATE = (u" • <https://%(host)s/ticket/%(number)s|#%(number)s> "
                   u"- %(summary)s")
 
+BUG_DIALOG = {
+    "title": "Create a Trac bug ticket",
+    "elements": [
+        {
+            "label": "Description",
+            "type": "textarea",
+            "name": "description",
+            "hint": "Describe the bug",
+        },
+        {
+            "label": "Version",
+            "type": "text",
+            "subtype": "number",
+            "name": "version",
+            "hint": CONF.get("misc", "bug_dialog_version_hint"),
+        },
+        {
+            "label": "Steps to Reproduce",
+            "type": "textarea",
+            "name": "reproduce",
+            "hint": "Explain how to reproduce the bug",
+            "optional": True,
+        },
+        {
+            "label": "Log",
+            "type": "textarea",
+            "name": "log",
+            "hint": "Add any available log data",
+            "optional": True,
+        },
+        {
+            "label": "Link",
+            "type": "text",
+            "subtype": "url",
+            "name": "link",
+            "placeholder": CONF.get("misc", "bug_dialog_link_hint"),
+            "optional": True,
+        },
+    ],
+}
+
 
 class QueryTrac(flask.views.MethodView):
     _to_md = functools.partial(trac_to_markdown.convert,
@@ -193,7 +235,7 @@ class QueryTrac(flask.views.MethodView):
                           (CONF.get("trac", "host"), query))
         return {"text": "\n".join(result), "response_type": "in_channel"}
 
-    def _handle_describe(self, query):
+    def handle_describe(self, query):
         try:
             ticket = trac_proxy.ticket.query(query)[0]
         except IndexError:
@@ -295,6 +337,26 @@ class QueryTrac(flask.views.MethodView):
         return {"text": "Done! New %s for #%s is %s" %
                 (field, ticket_id, new_value)}
 
+    def handle_new_bug(self):
+        return {
+            "text": "Create a bug ticket for which component?"
+            "response_type": "ephemeral",
+            "attachments": [
+                {
+                    "fallback": "Upgrade your Slack client to use messages like these.",
+                    "callback_id": "new_bug",
+                    "actions": [
+                        {
+                            "name": "component",
+                            "text": "Component",
+                            "type": "select",
+                            "data_source": "external",
+                            "min_query_length": 3,
+                        },
+                    ],
+                },
+            }
+
     @mimerender
     def post(self):
         text = flask.request.form["text"]
@@ -303,7 +365,8 @@ class QueryTrac(flask.views.MethodView):
             return self.handle_help()
         try:
             command, query = text.split(None, 1)
-            assert command.lower() in ("describe", "show", "query", "adjust")
+            assert command.lower() in ("describe", "show", "query", "adjust",
+                                       "bug")
         except (ValueError, AssertionError):
             # Try to figure out what the user wants
             try:
@@ -317,10 +380,13 @@ class QueryTrac(flask.views.MethodView):
 
         command = command.lower()
         if command == "describe":
-            return self._handle_describe("id=%s" % query)
+            return self.handle_describe("id=%s" % query)
 
         if command == "adjust":
             return self.handle_adjust(user, query)
+
+        if command == "bug":
+            return self.handle_new_bug()
 
         if command == "show":
             query = natural.natural_to_query(query, user)
@@ -343,11 +409,78 @@ application.add_url_rule(
 )
 
 
+# This could get loaded from the configuration / a file, and be less generic.
+BUG_TEMPLATE = """%(description)s
+
+=== Version ===
+
+[%(version)s]
+
+=== How to Reproduce ===
+
+''Steps:''
+
+%(steps)s
+
+=== Error log output ===
+
+%(log)s
+
+=== Other notes ===
+
+- [%(link)s %(link_name)s]
+"""
+
+
+def new_bug_ticket(user, data, component):
+    team = data["channel"]["name"]
+    form = data["submission"]
+    summary, description = form["description"].split(".", 1)
+    reporter = user
+    ticket_type = "bug"
+    priority = "normal"
+    if data["link"]:
+        link_name = urlparse.urlparse(data["link"]).netloc
+        try:
+            link_name = CONF.get("misc", "link_%s" % link_name)
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            link_name = link_name.split(".", 1)[0].title()
+    else:
+        link_name = ""
+    description = BUG_TEMPLATE % {
+        "description": description.strip(),
+        "version": data["version"],
+        "steps": data["reproduce"] or "",
+        "log": data["log"] or "",
+        "link": data["link"] or "",
+        "link_name": link_name,
+    }
+    ticket_id = trac_proxy.ticket.create(
+        summary,
+        description,
+        {
+            "team": team,
+            "reporter": user,
+            "type": ticket_type,
+            "priority": priority,
+            "component": component,
+        },
+        True)
+    # Post a message to show the ticket was created.
+    # TODO: need to get a Slack client configured to do the post.
+    response = QueryTrac.handle_describe(QueryTrac, "id=%s" % ticket_id)
+    return ""
+
+
 @application.route(CONF.get("slack", "action-endpoint"), methods=['POST'])
 def slack_action():
     """Route the action to the appropriate method."""
     data = json.loads(flask.request.form["payload"])
     user = data["user"]["name"]
+    if data["type"] == "dialog_submission":
+        if data["callback_id"].startswith("new_bug_"):
+            component = data["callback_id"].split("_")[2]
+            return new_bug_ticket(user, data, component)
     callback_id = data["callback_id"]
     if callback_id.startswith("adjust_"):
         field, tickets = callback_id.split("_")[1:]
@@ -366,12 +499,28 @@ def slack_action():
             trac_proxy.ticket.update(int(ticket), "", changes, True, user)
         return ("@%s set %s to %s for %s" %
                 (user, field, option, ticket_desc))
+    elif callback_id.startswith("new_bug"):
+        dialog = BUG_DIALOG.copy()
+        component = data["actions"][0]["selected_options"][0]["value"]
+        trigger_id = data["trigger_id"]
+        dialog["callback_id"] = "new_bug_%s" % component
+        open_dialog = slack_client.api_call("dialog.open", trigger_id=trigger_id,
+                                            dialog=dialog)
     return "Unknown action."
 
 
 @application.route(CONF.get("slack", "options-endpoint"), methods=['POST'])
+@mimerender
 def slack_options():
     """Provide options when users invoke message menus."""
+    data = json.loads(flask.request.form["payload"])
+    if data["name"] == "component_list":
+        typeahead = data["value"]
+        response = []
+        for component in trac_proxy.ticket.component.getAll():
+            if not typeahead or component.lower().startswith(typeahead):
+                response.append({"text": component, "value": component})
+        return json.dumps({"options": response})
 
 
 # Testing code.

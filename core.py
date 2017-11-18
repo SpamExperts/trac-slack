@@ -21,6 +21,10 @@ def load_configuration():
             "resolutions": "fixed,invalid,wontfix,duplicate,worksforme,cantfix",
             "describe_fields": "type,component,priority,status+,milestone",
         },
+        "misc": {
+            "bug_dialog_link_hint": "",
+            "bug_dialog_version_hint": "",
+        },
         "fixed_queries": {},
         "slack": {
             "token": "",
