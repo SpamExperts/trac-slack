@@ -444,7 +444,7 @@ def new_bug_ticket(user, data, component):
     reporter = user
     ticket_type = "bug"
     priority = "normal"
-    if data.get("link"):
+    if form.get("link"):
         link_name = urlparse.urlparse(data["link"]).netloc
         try:
             link_name = CONF.get("misc", "link_%s" % link_name)
@@ -454,10 +454,10 @@ def new_bug_ticket(user, data, component):
         link_name = ""
     description = BUG_TEMPLATE % {
         "description": description.strip(),
-        "version": data["version"],
-        "steps": data["reproduce"] or "",
-        "log": data["log"] or "",
-        "link": data["link"] or "",
+        "version": form["version"],
+        "steps": form.get("reproduce") or "",
+        "log": form.get("log") or "",
+        "link": form.get("link") or "",
         "link_name": link_name,
     }
     ticket_id = trac_proxy.ticket.create(
