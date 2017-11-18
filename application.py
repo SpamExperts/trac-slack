@@ -359,7 +359,8 @@ def slack_action():
         for ticket in tickets:
             changes = {field: option}
             trac_proxy.ticket.update(int(ticket), "", changes, True, user)
-        return "Done!"
+        return ("@%s set %s to %s for tickets %s" %
+                (user, field, option, ", ".join(tickets)))
     return "Unknown action."
 
 
