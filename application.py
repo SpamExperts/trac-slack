@@ -352,6 +352,11 @@ def slack_action():
     if callback_id.startswith("adjust_"):
         field, tickets = callback_id.split("_")[1:]
         tickets = tickets.split(",")
+        if len(tickets) == 1:
+            ticket_desc = "#" % tickets[0]
+        else:
+            ticket_desc = ("tickets %s" %
+                           ", ".join(["#%s" % ticket for ticket in tickets]))
         # We only support one action.
         action = data["actions"][0]
         # We only support one option.
@@ -359,8 +364,8 @@ def slack_action():
         for ticket in tickets:
             changes = {field: option}
             trac_proxy.ticket.update(int(ticket), "", changes, True, user)
-        return ("@%s set %s to %s for tickets %s" %
-                (user, field, option, ", ".join(tickets)))
+        return ("@%s set %s to %s for %s" %
+                (user, field, option, ticket_desc))
     return "Unknown action."
 
 
