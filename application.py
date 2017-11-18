@@ -370,10 +370,12 @@ class QueryTrac(flask.views.MethodView):
         user = flask.request.form["user_name"]
         if text.lower() == "help":
             return self.handle_help()
+        if text.lower() == "bug":
+            return self.handle_new_bug()
+
         try:
             command, query = text.split(None, 1)
-            assert command.lower() in ("describe", "show", "query", "adjust",
-                                       "bug")
+            assert command.lower() in ("describe", "show", "query", "adjust")
         except (ValueError, AssertionError):
             # Try to figure out what the user wants
             try:
@@ -391,9 +393,6 @@ class QueryTrac(flask.views.MethodView):
 
         if command == "adjust":
             return self.handle_adjust(user, query)
-
-        if command == "bug":
-            return self.handle_new_bug()
 
         if command == "show":
             query = natural.natural_to_query(query, user)
