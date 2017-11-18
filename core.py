@@ -25,6 +25,8 @@ def load_configuration():
         "slack": {
             "token": "",
             "endpoint": "/trac-slack"
+            "action-endpoint": "/trac-slack-action",
+            "options-endpoint": "/trac-slack-options",
         },
         "logging": {
             "file": "/var/log/trac-slack.log",

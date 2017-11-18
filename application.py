@@ -336,6 +336,16 @@ application.add_url_rule(
 )
 
 
+@application.route(CONF.get("slack", "action-endpoint"), methods=['POST'])
+def slack_action():
+    """Route the action to the appropriate method."""
+
+
+@application.route(CONF.get("slack", "options-endpoint"), methods=['POST'])
+def slack_options():
+    """Provide options when users invoke message menus."""
+
+
 # Testing code.
 if __name__ == "__main__":
     application.run(debug=True)
