@@ -189,13 +189,14 @@ class QueryTrac(flask.views.MethodView):
                                base="https://%s" % CONF.get("trac", "host"),
                                flavour="mrkdwn")
 
-    def _escape(self, value):
+    @staticmethod
+    def _escape(value):
         return value.replace("&", "&amp;").replace("<", "&lt;").replace(">",
                                                                         "&gt;")
 
-    def _get_tick_attributes(self, ticket):
-        escape = self._escape
-        to_md = self._to_md
+    def _get_tick_attributes(cls, ticket):
+        escape = cls._escape
+        to_md = cls._to_md
         attributes = dict(trac_proxy.ticket.get(ticket)[3])
         stamp = calendar.timegm(attributes['time'].timetuple())
         attributes["stamp"] = stamp
@@ -238,13 +239,14 @@ class QueryTrac(flask.views.MethodView):
                           (CONF.get("trac", "host"), query))
         return {"text": "\n".join(result), "response_type": "in_channel"}
 
-    def handle_describe(self, query):
+    @classmethod
+    def handle_describe(cls, query):
         try:
             ticket = trac_proxy.ticket.query(query)[0]
         except IndexError:
             # This should be ephemeral
             return {"text": "No such ticket"}
-        attr = self._get_tick_attributes(ticket)
+        attr = cls._get_tick_attributes(ticket)
         color = "#f5f5ef"
         if attr["type"] == "feature":
             color = "good"
@@ -270,7 +272,7 @@ class QueryTrac(flask.views.MethodView):
                     "title": attr["summary"],
                     "author_name": attr["owner"],
                     "title_link": "https://%(host)s/ticket/%(number)s" % attr,
-                    "text": self._to_md(attr["description"]),
+                    "text": cls._to_md(attr["description"]),
                     "fields": fields,
                     "footer": "#%(number)s" % attr,
                     "ts": attr["stamp"],
@@ -472,8 +474,10 @@ def new_bug_ticket(user, data, component):
         },
         True)
     # Post a message to show the ticket was created.
-    # TODO: need to get a Slack client configured to do the post.
-    response = QueryTrac.handle_describe(QueryTrac, "id=%s" % ticket_id)
+    response = QueryTrac.handle_describe("id=%s" % ticket_id)
+    slack_client.api_call(
+        "chat.postMessage", channel=data["channel"]["id"],
+        attachments=response["attachments"])
     return ""
 
 
