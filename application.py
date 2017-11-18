@@ -194,6 +194,7 @@ class QueryTrac(flask.views.MethodView):
         return value.replace("&", "&amp;").replace("<", "&lt;").replace(">",
                                                                         "&gt;")
 
+    @classmethod
     def _get_tick_attributes(cls, ticket):
         escape = cls._escape
         to_md = cls._to_md
