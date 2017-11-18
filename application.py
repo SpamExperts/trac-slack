@@ -445,7 +445,7 @@ def new_bug_ticket(user, data, component):
     ticket_type = "bug"
     priority = "normal"
     if form.get("link"):
-        link_name = urlparse.urlparse(data["link"]).netloc
+        link_name = urlparse.urlparse(form["link"]).netloc
         try:
             link_name = CONF.get("misc", "link_%s" % link_name)
         except (configparser.NoSectionError, configparser.NoOptionError):
