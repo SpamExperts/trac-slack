@@ -239,7 +239,10 @@ class QueryTrac(flask.views.MethodView):
         if not possible_fields:
             return {"text": "Sorry, I'm not set up for this yet."}
         possible_fields = possible_fields.split(",")
-        ticket_id, field, value, details = query.split(None, 3)
+        try:
+            ticket_id, field, value, details = query.split(None, 3)
+        except ValueError:
+            return {"text": "Sorry, I didn't understand that."}
         if field not in possible_fields:
             if len(possible_fields) == 1:
                 possible = possible_fields[0]
@@ -325,7 +328,7 @@ class QueryTrac(flask.views.MethodView):
                              "Have you tried quoting your text searches?")}
             return self._handle_query(query)
 
-        if command == "query":
+        if command
             return self._handle_query(query)
 
         return {"text": "Invalid command: %s" % command}
