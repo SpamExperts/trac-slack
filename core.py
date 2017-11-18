@@ -24,7 +24,7 @@ def load_configuration():
         "fixed_queries": {},
         "slack": {
             "token": "",
-            "endpoint": "/trac-slack"
+            "endpoint": "/trac-slack",
             "action-endpoint": "/trac-slack-action",
             "options-endpoint": "/trac-slack-options",
         },
