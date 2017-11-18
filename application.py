@@ -439,11 +439,12 @@ BUG_TEMPLATE = """%(description)s
 def new_bug_ticket(user, data, component):
     team = data["channel"]["name"]
     form = data["submission"]
+    application.logger.info("Bug ticket: %r", form)
     summary, description = form["description"].split(".", 1)
     reporter = user
     ticket_type = "bug"
     priority = "normal"
-    if data["link"]:
+    if data.get("link"):
         link_name = urlparse.urlparse(data["link"]).netloc
         try:
             link_name = CONF.get("misc", "link_%s" % link_name)
