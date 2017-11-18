@@ -5,6 +5,7 @@
 
 import os
 import pwd
+import json
 import logging
 import calendar
 import functools
@@ -339,6 +340,21 @@ application.add_url_rule(
 @application.route(CONF.get("slack", "action-endpoint"), methods=['POST'])
 def slack_action():
     """Route the action to the appropriate method."""
+    data = json.loads(flask.request.form["payload"])
+    user = data["user"]["name"]
+    callback_id = data["callback_id"]
+    if callback_id.startswith("adjust_"):
+        field, tickets = callback_id.split("_")[1:]
+        tickets = tickets.split(",")
+        # We only support one action.
+        action = data["actions"][0]
+        # We only support one option.
+        option = action["selected_options"][0]["value"]
+        for ticket in tickets:
+            changes = {field: option}
+            trac_proxy.ticket.update(int(ticket), "", changes, True, user)
+        return json.dumps({"text": "Done!"})
+    return json.dumps({"text": "Unknown action."})
 
 
 @application.route(CONF.get("slack", "options-endpoint"), methods=['POST'])
