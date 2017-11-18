@@ -36,6 +36,8 @@ import flask.views
 from flask import jsonify
 from mimerender import FlaskMimeRender
 
+import slackclient
+
 import tracxml
 import natural
 import trac_to_markdown
@@ -46,6 +48,7 @@ CONF = load_configuration()
 # This is the WSGI application that we are creating.
 application = flask.Flask(__name__)
 mimerender = FlaskMimeRender()(default='json', json=jsonify)
+slack_client = slackclient.SlackClient(CONF.get("slack", "bot_token"))
 
 
 def setup_logging(logger):
