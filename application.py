@@ -339,7 +339,7 @@ class QueryTrac(flask.views.MethodView):
 
     def handle_new_bug(self):
         return {
-            "text": "Create a bug ticket for which component?"
+            "text": "Create a bug ticket for which component?",
             "response_type": "ephemeral",
             "attachments": [
                 {
@@ -355,7 +355,8 @@ class QueryTrac(flask.views.MethodView):
                         },
                     ],
                 },
-            }
+            ],
+        }
 
     @mimerender
     def post(self):
@@ -514,13 +515,16 @@ def slack_action():
 def slack_options():
     """Provide options when users invoke message menus."""
     data = json.loads(flask.request.form["payload"])
-    if data["name"] == "component_list":
-        typeahead = data["value"]
+    if data["name"] == "component":
+        try:
+            typeahead = data["value"]
+        except KeyError:
+            typeahead = ""
         response = []
         for component in trac_proxy.ticket.component.getAll():
             if not typeahead or component.lower().startswith(typeahead):
                 response.append({"text": component, "value": component})
-        return json.dumps({"options": response})
+        return {"options": response}
 
 
 # Testing code.
