@@ -439,7 +439,7 @@ BUG_TEMPLATE = """%(description)s
 
 
 def new_bug_ticket(user, data, component):
-    team = data["channel"]["name"]
+    team = data["channel"]["name"].title()
     form = data["submission"]
     application.logger.info("Bug ticket: %r", form)
     summary, description = form["description"].split(".", 1)
