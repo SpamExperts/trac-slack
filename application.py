@@ -89,7 +89,10 @@ setup_logging(natural.logger)
 
 
 def verify_token():
-    token = flask.request.form["token"]
+    try:
+        token = flask.request.form["token"]
+    except KeyError:
+        token = json.loads(flask.request.form["payload"])["token"]
     conf_token = CONF.get("slack", "token")
     if token != conf_token:
         return "Invalid token"
@@ -356,8 +359,8 @@ def slack_action():
         for ticket in tickets:
             changes = {field: option}
             trac_proxy.ticket.update(int(ticket), "", changes, True, user)
-        return json.dumps({"text": "Done!"})
-    return json.dumps({"text": "Unknown action."})
+        return "Done!"
+    return "Unknown action."
 
 
 @application.route(CONF.get("slack", "options-endpoint"), methods=['POST'])
