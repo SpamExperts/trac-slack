@@ -331,7 +331,7 @@ class QueryTrac(flask.views.MethodView):
                              "Have you tried quoting your text searches?")}
             return self._handle_query(query)
 
-        if command
+        if command == "query":
             return self._handle_query(query)
 
         return {"text": "Invalid command: %s" % command}
