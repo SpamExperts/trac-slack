@@ -154,7 +154,7 @@ class QueryTrac(flask.views.MethodView):
         attributes["host"] = CONF.get("trac", "host")
         attributes["number"] = str(ticket)
         attributes["summary"] = escape(attributes["summary"])
-        attributes["description"] = escape(to_md(attributes["description"]))
+        attributes["description"] = to_md(escape(attributes["description"]))
         attributes["keywords"] = escape(attributes["keywords"])
         if attributes["status"] == "closed":
             attributes["status+"] = "%s: %s" % (attributes["status"],
