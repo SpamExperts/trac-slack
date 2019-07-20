@@ -1,8 +1,8 @@
-requests==2.20.0
-flask==0.12.3
-raven==5.24.3
+requests==2.22.0
+flask==1.1.1
+raven==6.10.0
 mimerender==0.6.0
-spacy==0.101.0
-dateparser==0.4.0
-python-dateutil==2.5.3
-slackclient==1.0.1
+spacy==2.1.6
+dateparser==0.7.1
+python-dateutil==2.8.0
+slackclient==2.1.0
