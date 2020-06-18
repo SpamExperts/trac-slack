@@ -1,4 +1,4 @@
-requests==2.23.0
+requests==2.24.0
 flask==1.1.2
 raven==6.10.0
 mimerender==0.6.0
