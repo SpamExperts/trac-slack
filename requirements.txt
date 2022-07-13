@@ -1,5 +1,5 @@
 requests==2.24.0
-flask==1.1.2
+flask==2.1.3
 raven==6.10.0
 mimerender==0.6.0
 spacy==0.101.0
